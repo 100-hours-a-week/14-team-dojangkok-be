@@ -73,14 +73,13 @@ public class SocialAuth extends BaseCreatedTimeEntity {
         this.lastLoggedInAt = lastLoggedInAt;
     }
 
-    public static SocialAuth createSocialAuth(Member member, Provider provider, String providerId, String email, Map<String, Object> attributes
-    ) {
+    public static SocialAuth createSocialAuth(Member member, Provider provider, String providerId, String email) {
         return SocialAuth.builder()
                 .member(member)
                 .provider(provider)
                 .providerId(providerId)
                 .email(email)
-                .attributes(attributes)
+//                .attributes(attributes)
                 .lastLoggedInAt(LocalDateTime.now())
                 .build();
     }
