@@ -1,0 +1,101 @@
+package com.dojangkok.backend.domain;
+
+import com.dojangkok.backend.common.entity.BaseTimeEntity;
+import com.dojangkok.backend.domain.enums.FileAssetStatus;
+import com.dojangkok.backend.domain.enums.FileType;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+@Table(
+        name = "file_asset",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_media_asset_file_key", columnNames = "file_key")
+        },
+        indexes = {
+                @Index(name = "idx_file_asset_status_created_at", columnList = "status, created_at")
+        }
+)
+public class FileAsset extends BaseTimeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // self reference (원본 -> 썸네일)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "thumbnail_id",
+            foreignKey = @ForeignKey(name = "fk_file_asset_thumbnail")
+    )
+    private FileAsset thumbnail;
+
+    @Column(name = "file_key", nullable = false, length = 255)
+    private String fileKey;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "media_type", nullable = false, length = 20)
+    private FileType fileType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private FileAssetStatus status;
+
+    @Column(name = "content_type", nullable = false, length = 50)
+    private String contentType;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", nullable = false, columnDefinition = "json")
+    private Map<String, Object> metadata;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Builder(access = AccessLevel.PRIVATE)
+    private FileAsset(FileAsset thumbnail, String fileKey, FileType fileType,
+                       FileAssetStatus status, String contentType, Map<String, Object> metadata, LocalDateTime deletedAt) {
+        this.thumbnail = thumbnail;
+        this.fileKey = fileKey;
+        this.fileType = fileType;
+        this.status = status;
+        this.contentType = contentType;
+        this.metadata = metadata == null ? new HashMap<>() : new HashMap<>(metadata);
+        this.deletedAt = deletedAt;
+    }
+
+    public static FileAsset createFileAsset(String fileKey, FileType fileType,
+                                             String contentType, Map<String, Object> metadataJson) {
+        return FileAsset.builder()
+                .fileKey(fileKey)
+                .fileType(fileType)
+                .status(FileAssetStatus.UPLOADING)
+                .contentType(contentType)
+                .metadata(metadataJson)
+                .build();
+    }
+
+    public void markCompleted() {
+        this.status = FileAssetStatus.COMPLETED;
+    }
+
+    public void attachThumbnail(FileAsset thumbnail) {
+        this.thumbnail = thumbnail;
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+}
+
