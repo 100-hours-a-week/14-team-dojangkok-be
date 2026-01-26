@@ -34,10 +34,10 @@ public class Member extends BaseTimeEntity {
     @Column(name = "member_id")
     private Long id;
 
-    @Column(name = "nickname", nullable = false, length = 30)
+    @Column(name = "nickname", length = 30)
     private String nickname;
 
-    @Column(name = "email", nullable = false, length = 100)
+    @Column(name = "email", length = 100)
     private String email;
 
     @Enumerated(EnumType.STRING)
@@ -76,4 +76,11 @@ public class Member extends BaseTimeEntity {
                 .build();
     }
 
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateLastLoggedInAt() {
+        this.lastLoggedInAt = LocalDateTime.now();
+    }
 }
