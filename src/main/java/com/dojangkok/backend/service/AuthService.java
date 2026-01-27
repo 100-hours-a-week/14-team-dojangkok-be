@@ -43,7 +43,7 @@ public class AuthService {
         TokenExchangeResponseDto token = TokenExchangeResponseDto.builder()
                 .accessToken(accessToken)
                 .expiresIn(jwtProvider.getAccessExpMin() * 60)
-                .isNewUser(isNewUser)
+                .newUser(isNewUser)
                 .build();
 
         return TokenExchangeResult.builder()

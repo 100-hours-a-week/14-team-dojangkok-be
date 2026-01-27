@@ -37,6 +37,8 @@ public class MemberService {
     private final LifestyleVersionRepository lifestyleVersionRepository;
     private final LifestyleItemRepository lifestyleItemRepository;
     private final PropertyPostRepository propertyPostRepository;
+    private final ChecklistTemplateRepository checklistTemplateRepository;
+    private final ChecklistTemplateItemRepository checklistTemplateItemRepository;
 
     @Transactional
     public UpdateNicknameResponseDto updateNickname(Long memberId, UpdateNicknameRequestDto updateNicknameRequestDto) {
@@ -127,22 +129,38 @@ public class MemberService {
         lifestyleRepository.findByMemberId(memberId).ifPresent(lifestyle -> {
             Long lifestyleId = lifestyle.getId();
             
-            // 1. currentVersion FK를 벌크 쿼리로 해제 (영속성 컨텍스트 우회)
+            // 1. currentVersion FK를 벌크 쿼리로 해제
             lifestyleRepository.clearCurrentVersion(lifestyleId);
             
-            // 2. lifestyle_item 삭제
+            // 2. lifestyle_version 조회
             List<LifestyleVersion> versions = lifestyleVersionRepository.findAllByLifestyleId(lifestyleId);
             if (!versions.isEmpty()) {
                 List<Long> versionIds = versions.stream()
                         .map(LifestyleVersion::getId)
                         .toList();
+                
+                // 3. checklist_template 조회
+                List<ChecklistTemplate> templates = checklistTemplateRepository.findAllByLifestyleVersionIdIn(versionIds);
+                if (!templates.isEmpty()) {
+                    List<Long> templateIds = templates.stream()
+                            .map(ChecklistTemplate::getId)
+                            .toList();
+                    
+                    // 4. checklist_template_item 벌크 삭제
+                    checklistTemplateItemRepository.deleteAllByChecklistTemplateIdIn(templateIds);
+                    
+                    // 5. checklist_template 벌크 삭제
+                    checklistTemplateRepository.deleteAllByLifestyleVersionIdIn(versionIds);
+                }
+                
+                // 6. lifestyle_item 삭제
                 lifestyleItemRepository.deleteAllByLifestyleVersionIdIn(versionIds);
             }
             
-            // 3. lifestyle_version 삭제
+            // 7. lifestyle_version 삭제
             lifestyleVersionRepository.deleteAllByLifestyleId(lifestyleId);
             
-            // 4. lifestyle 삭제
+            // 8. lifestyle 삭제
             lifestyleRepository.deleteByMemberId(memberId);
         });
     }
