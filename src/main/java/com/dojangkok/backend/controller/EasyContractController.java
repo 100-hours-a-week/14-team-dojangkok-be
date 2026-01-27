@@ -38,10 +38,10 @@ public class EasyContractController {
     }
 
     @PostMapping("/{easyContractId}/files")
-    public ResponseEntity<Void> attachFiles(@CurrentMemberId Long memberId, @PathVariable Long easyContractId,
+    public DataResponseDto<EasyContractFileAttachResponseDto> attachFiles(@CurrentMemberId Long memberId, @PathVariable Long easyContractId,
                                             @Valid @RequestBody EasyContractFileRequestDto easyContractFileRequestDto) {
-        easyContractService.attachFiles(memberId, easyContractId, easyContractFileRequestDto);
-        return ResponseEntity.noContent().build();
+        EasyContractFileAttachResponseDto responseDto = easyContractService.attachFiles(memberId, easyContractId, easyContractFileRequestDto);
+        return new DataResponseDto<>(Code.SUCCESS, "쉬운 계약서 파일이 성공적으로 첨부되었습니다.", responseDto);
     }
 
     @GetMapping("/{easyContractId}/assets")

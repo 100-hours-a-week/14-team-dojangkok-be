@@ -10,7 +10,7 @@ import com.dojangkok.backend.domain.EasyContract;
 import com.dojangkok.backend.domain.EasyContractFile;
 import com.dojangkok.backend.domain.FileAsset;
 import com.dojangkok.backend.domain.Member;
-import com.dojangkok.backend.dto.checklist.EasyContractFileDto;
+import com.dojangkok.backend.dto.easycontract.EasyContractFileDto;
 import com.dojangkok.backend.dto.easycontract.*;
 import com.dojangkok.backend.mapper.EasyContractMapper;
 import com.dojangkok.backend.repository.EasyContractFileRepository;
@@ -115,14 +115,20 @@ public class EasyContractService {
     }
 
     @Transactional
-    public void attachFiles(Long memberId, Long easyContractId,
+    public EasyContractFileAttachResponseDto attachFiles(Long memberId, Long easyContractId,
                             EasyContractFileRequestDto easyContractFileRequestDto) {
         EasyContract easyContract = getEasyContractWithAccessCheck(memberId, easyContractId);
 
         List<Long> fileAssetIds = easyContractFileRequestDto.getFileAssetIds();
 
-        attachFilesToEasyContract(easyContract, fileAssetIds);
+        List<EasyContractFile> savedFiles = attachFilesToEasyContract(easyContract, fileAssetIds);
         log.info("Files attached to EasyContract: easyContractId={}, count={}", easyContractId, fileAssetIds.size());
+
+        List<EasyContractFileAttachItemDto> items = savedFiles.stream()
+                .map(easyContractMapper::toEasyContractFileAttachItemDto)
+                .toList();
+
+        return easyContractMapper.toEasyContractFileAttachResponseDto(items);
     }
 
     @Transactional(readOnly = true)
@@ -172,9 +178,9 @@ public class EasyContractService {
         return TITLE_PREFIX + (completedCount + 1);
     }
 
-    private void attachFilesToEasyContract(EasyContract easyContract, List<Long> fileAssetIds) {
+    private List<EasyContractFile> attachFilesToEasyContract(EasyContract easyContract, List<Long> fileAssetIds) {
         if (fileAssetIds == null || fileAssetIds.isEmpty()) {
-            return;
+            return List.of();
         }
 
         Map<Long, FileAsset> fileAssetMap = fileAssetValidator.validateAndGetFileAssets(fileAssetIds);
@@ -194,7 +200,7 @@ public class EasyContractService {
             easyContractFiles.add(easyContractFile);
         }
 
-        easyContractFileRepository.saveAll(easyContractFiles);
+        return easyContractFileRepository.saveAll(easyContractFiles);
     }
 
     private EasyContract getEasyContractWithAccessCheck(Long memberId, Long easyContractId) {
