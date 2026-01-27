@@ -44,5 +44,8 @@ public class ChecklistTemplate extends BaseCreatedTimeEntity {
                 .checklistStatus(checklistStatus)
                 .build();
     }
-}
 
+    public void updateStatus(ChecklistStatus status) {
+        this.checklistStatus = status;
+    }
+}
