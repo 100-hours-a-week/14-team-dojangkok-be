@@ -17,5 +17,5 @@ public class TokenExchangeResponseDto {
     private int expiresIn;
 
     @JsonProperty("is_new_user")
-    private boolean isNewUser;
+    private boolean newUser;
 }
