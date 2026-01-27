@@ -84,4 +84,19 @@ public class EasyContractMapper {
                 .fileAssetList(fileAssetList)
                 .build();
     }
+
+    public EasyContractFileAttachItemDto toEasyContractFileAttachItemDto(EasyContractFile easyContractFile) {
+        return EasyContractFileAttachItemDto.builder()
+                .easyContractFileId(easyContractFile.getId())
+                .fileAssetId(easyContractFile.getFileAsset().getId())
+                .fileType(easyContractFile.getFileAsset().getFileType())
+                .assetStatus(easyContractFile.getFileAsset().getStatus())
+                .build();
+    }
+
+    public EasyContractFileAttachResponseDto toEasyContractFileAttachResponseDto(List<EasyContractFileAttachItemDto> items) {
+        return EasyContractFileAttachResponseDto.builder()
+                .fileItems(items)
+                .build();
+    }
 }

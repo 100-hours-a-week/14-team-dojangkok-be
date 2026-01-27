@@ -1,6 +1,5 @@
 package com.dojangkok.backend.dto.easycontract;
 
-import com.dojangkok.backend.dto.checklist.EasyContractFileDto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
