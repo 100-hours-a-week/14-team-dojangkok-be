@@ -42,7 +42,7 @@ public class ChecklistTemplateService {
         generateChecklistTemplate(event.lifestyleVersionId(), event.lifestyleItems());
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void generateChecklistTemplate(Long lifestyleVersionId, List<String> lifestyleItems) {
         try {
             // 1. PROCESSING 상태로 ChecklistTemplate 생성
@@ -52,8 +52,7 @@ public class ChecklistTemplateService {
             ChecklistTemplate checklistTemplate = createTemplateWithStatus(lifestyleVersion, ChecklistStatus.PROCESSING);
 
             // 2. FastAPI에 비동기 요청 (결과는 콜백으로 받음)
-//            ChecklistGenerateRequestDto request = checklistTemplateMapper.toChecklistGenerateRequestDto(lifestyleItems);
-            ChecklistGenerateRequestDto request = checklistTemplateMapper.toEmptyChecklistGenerateRequestDto();
+            ChecklistGenerateRequestDto request = checklistTemplateMapper.toChecklistGenerateRequestDto(lifestyleItems);
 
             aiServiceClient.requestChecklistGeneration(request, checklistTemplate.getId());
 
