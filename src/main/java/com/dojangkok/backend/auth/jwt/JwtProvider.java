@@ -74,22 +74,6 @@ public class JwtProvider {
     }
 
     /**
-     * Access Token 유효성 검증 (서명/만료 + typ=access)
-     * - 필터 등에서 true/false만 필요할 때 사용
-     */
-    public boolean validateAccessToken(String accessToken) {
-        return tryExtractMemberIdFromAccessToken(accessToken).isPresent();
-    }
-
-    /**
-     * Access Token에서 memberId 추출 (예외 던짐)
-     */
-    public Long getMemberIdFromAccessToken(String accessToken) {
-        return tryExtractMemberIdFromAccessToken(accessToken)
-                .orElseThrow(() -> new GeneralException(Code.INVALID_ACCESS_TOKEN));
-    }
-
-    /**
      * Refresh Token에서 memberId 추출 (예외 던짐)
      */
     public Long getMemberIdFromRefreshToken(String refreshToken) {
@@ -98,7 +82,7 @@ public class JwtProvider {
     }
 
     /**
-     * Access Token에서 memberId 추출 (Optional)
+     * Access Token에서 memberId 추출
      * - 파싱/만료/서명/typ 검증 실패 시 empty
      * - 필터에서 일단 통과시키되 인증만 안 태우는 용도
      */
@@ -116,7 +100,7 @@ public class JwtProvider {
     }
 
     /**
-     * Refresh Token에서 memberId 추출 (Optional)
+     * Refresh Token에서 memberId 추출
      */
     public Optional<Long> tryExtractMemberIdFromRefreshToken(String refreshToken) {
         try {
