@@ -13,6 +13,7 @@ import com.dojangkok.backend.dto.auth.TokenRefreshResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 
@@ -26,6 +27,7 @@ public class AuthService {
     private final RedisRefreshTokenStore refreshTokenStore;
     private final JwtProvider jwtProvider;
 
+    @Transactional
     public TokenExchangeResult exchangeToken(String code) {
         ExchangeData data = exchangeCodeStore.consume(code)
                 .orElseThrow(() -> new GeneralException(Code.INVALID_EXCHANGE_CODE));
@@ -50,6 +52,7 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional
     public TokenRefreshResult refreshToken(String refreshToken) {
 
         Long memberId = jwtProvider.getMemberIdFromRefreshToken(refreshToken); // 서명 검증 포함
@@ -78,6 +81,7 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional
     public String logout(String refreshToken) {
         if (refreshToken != null) {
             refreshTokenStore.deleteByToken(refreshToken);

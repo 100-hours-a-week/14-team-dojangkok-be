@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -32,16 +33,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private String successRedirect;
 
     @Override
-    public void onAuthenticationSuccess(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            Authentication authentication
-    ) throws IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 
         log.info("OAuth2 로그인 성공 - 핸들러 진입");
 
         DefaultOAuth2User principal = (DefaultOAuth2User) authentication.getPrincipal();
-        Long memberId = ((Number) principal.getAttributes().get("memberId")).longValue();
+        Long memberId = ((Number) Objects.requireNonNull(principal).getAttributes().get("memberId")).longValue();
         boolean isNewUser = (Boolean) principal.getAttributes().get("isNewUser");
 
         log.info("memberId: {}, isNewUser: {}", memberId, isNewUser);

@@ -47,7 +47,7 @@ public class SocialAuth extends BaseCreatedTimeEntity {
     @Column(name = "provider_id", nullable = false)
     private String providerId;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email")
     private String email;
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -73,18 +73,24 @@ public class SocialAuth extends BaseCreatedTimeEntity {
         this.lastLoggedInAt = lastLoggedInAt;
     }
 
-    public static SocialAuth createSocialAuth(Member member, Provider provider, String providerId, String email) {
+    public static SocialAuth createSocialAuth(Member member, Provider provider, String providerId, 
+                                               String email, Map<String, Object> attributes) {
         return SocialAuth.builder()
                 .member(member)
                 .provider(provider)
                 .providerId(providerId)
                 .email(email)
-//                .attributes(attributes)
+                .attributes(attributes)
                 .lastLoggedInAt(LocalDateTime.now())
                 .build();
     }
 
     public void syncLastLoggedInAt() {
+        this.lastLoggedInAt = LocalDateTime.now();
+    }
+
+    public void updateAttributes(Map<String, Object> attributes) {
+        this.attributes = attributes == null ? new HashMap<>() : new HashMap<>(attributes);
         this.lastLoggedInAt = LocalDateTime.now();
     }
 }
