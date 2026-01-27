@@ -30,7 +30,7 @@ public class WithdrawnMember {
     @Column(name = "member_id", nullable = false)
     private Long memberId;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email")
     private String email;
 
     @Column(name = "nickname", length = 30, nullable = false)

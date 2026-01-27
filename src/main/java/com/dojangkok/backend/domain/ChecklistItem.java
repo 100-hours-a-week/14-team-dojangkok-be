@@ -41,10 +41,10 @@ public class ChecklistItem extends BaseTimeEntity {
         this.checklist = checklist;
     }
 
-    public static ChecklistItem createChecklistItem(String content, Checklist checklist) {
+    public static ChecklistItem createChecklistItem(String content, boolean isCompleted, Checklist checklist) {
         return ChecklistItem.builder()
                 .content(content)
-                .isCompleted(false)
+                .isCompleted(isCompleted)
                 .checklist(checklist)
                 .build();
     }
@@ -55,6 +55,14 @@ public class ChecklistItem extends BaseTimeEntity {
 
     public void unComplete() {
         this.isCompleted = false;
+    }
+
+    public void updateStatus(boolean isCompleted) {
+        this.isCompleted = isCompleted;
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
     }
 
 }

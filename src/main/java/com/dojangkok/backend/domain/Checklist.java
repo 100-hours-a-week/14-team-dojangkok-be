@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-
 @Entity
 @Table(
         name = "checklist",
@@ -52,6 +51,5 @@ public class Checklist extends BaseTimeEntity {
                 .checklistTemplate(checklistTemplate)
                 .build();
     }
-
 }
 

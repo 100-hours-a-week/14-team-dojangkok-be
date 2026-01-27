@@ -23,12 +23,10 @@ public class Lifestyle extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // OneToOne 대신 ManyToOne으로 열어두고 unique로 제약
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    // OneToOne 대신 ManyToOne으로 열어두고 unique로 제약
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "current_version_id")
     private LifestyleVersion currentVersion;
@@ -46,6 +44,8 @@ public class Lifestyle extends BaseTimeEntity {
                 .build();
     }
 
-
+    public void updateCurrentVersion(LifestyleVersion lifestyleVersion) {
+        this.currentVersion = lifestyleVersion;
+    }
 }
 

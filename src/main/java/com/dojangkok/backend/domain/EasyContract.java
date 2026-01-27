@@ -2,7 +2,6 @@ package com.dojangkok.backend.domain;
 
 import com.dojangkok.backend.common.entity.BaseTimeEntity;
 import com.dojangkok.backend.domain.enums.EasyContractStatus;
-import com.dojangkok.backend.domain.enums.FileAssetStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -27,8 +26,11 @@ public class EasyContract extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "title", length = 100)
+    private String title;
+
     @Lob
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)
@@ -43,22 +45,47 @@ public class EasyContract extends BaseTimeEntity {
     private Member member;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private EasyContract(Member member, String content, EasyContractStatus status, LocalDateTime deletedAt) {
+    private EasyContract(Member member, String title, String content, EasyContractStatus status, LocalDateTime deletedAt) {
         this.member = member;
+        this.title = title;
         this.content = content;
         this.status = status;
         this.deletedAt = deletedAt;
     }
 
-    public static EasyContract createEasyContract(Member member, String content) {
+    public static EasyContract createEasyContract(Member member, String title, String content) {
         return EasyContract.builder()
                 .member(member)
+                .title(title)
                 .content(content)
-                .status(EasyContractStatus.PROCESSING)
+                .status(EasyContractStatus.COMPLETED)
+                .deletedAt(null)
                 .build();
     }
 
-    public void markCompleted() {
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void updateContent(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+
+    public void markCompleted(String content) {
+        this.content = content;
         this.status = EasyContractStatus.COMPLETED;
+    }
+
+    public void markFailed() {
+        this.status = EasyContractStatus.FAILED;
+    }
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean canRetry() {
+        return this.status == EasyContractStatus.FAILED || this.status == EasyContractStatus.PROCESSING;
     }
 }
