@@ -45,8 +45,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseDto logout(@CookieValue(name = "refresh_token", required = false) String cookieRefreshToken,
-                              HttpServletResponse response) {
+    public ResponseDto logout(@CookieValue(name = "refresh_token", required = false) String cookieRefreshToken, HttpServletResponse response) {
         String expiredCookie = authService.logout(cookieRefreshToken);
         response.addHeader(HttpHeaders.SET_COOKIE, expiredCookie);
         return new ResponseDto(Code.SUCCESS, "로그아웃이 완료되었습니다.");
