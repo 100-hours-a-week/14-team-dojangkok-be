@@ -1,4 +1,4 @@
-package com.dojangkok.backend.dto.checklist;
+package com.dojangkok.backend.dto.easycontract;
 
 import com.dojangkok.backend.domain.enums.FileType;
 import com.fasterxml.jackson.annotation.JsonProperty;
