@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+
+    <!-- Spring profile 사용 -->
+    <springProfile name="local">
+        <property name="LOG_LEVEL" value="DEBUG"/>
+    </springProfile>
+
+    <springProfile name="dev">
+        <property name="LOG_LEVEL" value="INFO"/>
+    </springProfile>
+
+    <!-- 로컬 패턴 appender -->
+    <springProfile name="local">
+        <appender name="CONSOLE_PATTERN" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+    </springProfile>
+
+    <!-- dev JSON appender -->
+    <springProfile name="dev">
+        <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"app":"dojangkok-backend","env":"${spring.profiles.active:-local}"}</customFields>
+            </encoder>
+        </appender>
+    </springProfile>
+
+    <!-- 로컬 -->
+    <springProfile name="local">
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="CONSOLE_PATTERN"/>
+        </root>
+    </springProfile>
+
+    <!-- dev -->
+    <springProfile name="dev">
+        <root level="${LOG_LEVEL}">
+            <appender-ref ref="CONSOLE_JSON"/>
+        </root>
+    </springProfile>
+
+</configuration>
