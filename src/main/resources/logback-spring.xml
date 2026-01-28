@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="false">
-
+    <property name="ACTIVE_PROFILE" value="${spring.profiles.active:-dev}"/>
     <property name="LOG_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
@@ -25,7 +25,7 @@
     <springProfile name="dev">
         <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-                <customFields>{"app":"dojangkok-backend","env":"${spring.profiles.active:-local}"}</customFields>
+                <customFields>{"app":"dojangkok-backend","env":"${ACTIVE_PROFILE}"}</customFields>
             </encoder>
         </appender>
     </springProfile>
@@ -34,11 +34,11 @@
         <appender name="FILE"
                   class="ch.qos.logback.core.rolling.RollingFileAppender">
 
-            <file>${LOG_PATH}/${spring.profiles.active}/application.log</file>
+            <file>${LOG_PATH}/${ACTIVE_PROFILE}/application.log</file>
 
             <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
                 <fileNamePattern>
-                    ${LOG_PATH}/${spring.profiles.active}/application-%d{yyyy-MM-dd}.log
+                    ${LOG_PATH}/${ACTIVE_PROFILE}/application-%d{yyyy-MM-dd}.log
                 </fileNamePattern>
 
                 <maxHistory>30</maxHistory>
