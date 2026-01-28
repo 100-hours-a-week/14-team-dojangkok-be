@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="false">
+
+    <!-- 공통 속성 -->
     <property name="ACTIVE_PROFILE" value="${spring.profiles.active:-dev}"/>
     <property name="LOG_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
+    <!-- LOG LEVEL 설정 (profile) -->
     <springProfile name="local">
         <property name="LOG_PATH" value="logs"/>
         <property name="LOG_LEVEL" value="DEBUG"/>
@@ -14,6 +17,9 @@
         <property name="LOG_LEVEL" value="INFO"/>
     </springProfile>
 
+    <!-- 콘솔 Appender -->
+
+    <!-- local : 패턴 사용 -->
     <springProfile name="local">
         <appender name="CONSOLE_PATTERN" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
@@ -22,6 +28,7 @@
         </appender>
     </springProfile>
 
+    <!-- dev : JSON 사용 -->
     <springProfile name="dev">
         <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
@@ -30,19 +37,25 @@
         </appender>
     </springProfile>
 
-    <springProfile name="local,dev">
-        <appender name="FILE"
-                  class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!-- 파일 Appender (날짜별 분리) -->
 
+    <!-- local : 패턴 사용 -->
+    <springProfile name="local">
+        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+            <!-- 현재 로그 파일 -->
             <file>${LOG_PATH}/${ACTIVE_PROFILE}/application.log</file>
 
+            <!-- 날짜별 롤링 -->
             <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
                 <fileNamePattern>
                     ${LOG_PATH}/${ACTIVE_PROFILE}/application-%d{yyyy-MM-dd}.log
                 </fileNamePattern>
 
+                <!-- 30일 보관 -->
                 <maxHistory>30</maxHistory>
 
+                <!-- 전체 로그 용량 제한 -->
                 <totalSizeCap>3GB</totalSizeCap>
             </rollingPolicy>
 
@@ -52,7 +65,37 @@
         </appender>
     </springProfile>
 
+    <!-- dev : JSON 파일 -->
+    <springProfile name="dev">
+        <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
+            <!-- 현재 로그 파일 -->
+            <file>${LOG_PATH}/${ACTIVE_PROFILE}/application.log</file>
+
+            <!-- 날짜별 롤링 -->
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>
+                    ${LOG_PATH}/${ACTIVE_PROFILE}/application-%d{yyyy-MM-dd}.log
+                </fileNamePattern>
+
+                <!-- 30일 보관 -->
+                <maxHistory>30</maxHistory>
+
+                <!-- 전체 로그 용량 제한 -->
+                <totalSizeCap>3GB</totalSizeCap>
+            </rollingPolicy>
+
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"app":"dojangkok-backend","env":"${ACTIVE_PROFILE}"}</customFields>
+            </encoder>
+        </appender>
+    </springProfile>
+
+    <!-- ==================================================
+         루트 logger
+    ================================================== -->
+
+    <!-- local -->
     <springProfile name="local">
         <root level="${LOG_LEVEL}">
             <appender-ref ref="CONSOLE_PATTERN"/>
@@ -60,10 +103,12 @@
         </root>
     </springProfile>
 
+    <!-- dev -->
     <springProfile name="dev">
         <root level="${LOG_LEVEL}">
             <appender-ref ref="CONSOLE_JSON"/>
             <appender-ref ref="FILE"/>
         </root>
     </springProfile>
+
 </configuration>
