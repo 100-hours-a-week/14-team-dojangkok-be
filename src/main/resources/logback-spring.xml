@@ -59,7 +59,7 @@
     </appender>
 </springProfile>
 
-<!-- Root logger -->
+<!-- 루트 logger -->
 <springProfile name="local">
     <root level="${LOG_LEVEL}">
         <appender-ref ref="CONSOLE_PATTERN"/>
