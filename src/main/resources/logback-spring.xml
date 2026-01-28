@@ -19,7 +19,7 @@
 
     <!-- 콘솔 Appender -->
 
-    <!-- local : 패턴 사용 -->
+    <!-- local : 패턴 형식 -->
     <springProfile name="local">
         <appender name="CONSOLE_PATTERN" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
@@ -28,7 +28,7 @@
         </appender>
     </springProfile>
 
-    <!-- dev : JSON 사용 -->
+    <!-- dev : JSON 형식 -->
     <springProfile name="dev">
         <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
@@ -39,7 +39,7 @@
 
     <!-- 파일 Appender (날짜별 분리) -->
 
-    <!-- local : 패턴 사용 -->
+    <!-- local : 패턴 형식 -->
     <springProfile name="local">
         <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
@@ -65,7 +65,7 @@
         </appender>
     </springProfile>
 
-    <!-- dev : JSON 파일 -->
+    <!-- dev : JSON 형식 -->
     <springProfile name="dev">
         <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
