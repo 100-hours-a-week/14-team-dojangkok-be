@@ -1,45 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration scan="true">
+<configuration scan="false">
 
-    <!-- Spring profile 사용 -->
-    <springProfile name="local">
-        <property name="LOG_LEVEL" value="DEBUG"/>
-    </springProfile>
+<!-- 공통 속성 -->
+<property name="LOG_PATH" value="logs"/>
+<property name="LOG_PATTERN"
+          value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
-    <springProfile name="dev">
-        <property name="LOG_LEVEL" value="INFO"/>
-    </springProfile>
+<!-- LOG LEVEL 설정 (profile) -->
+<springProfile name="local">
+    <property name="LOG_LEVEL" value="DEBUG"/>
+</springProfile>
 
-    <!-- 로컬 패턴 appender -->
-    <springProfile name="local">
-        <appender name="CONSOLE_PATTERN" class="ch.qos.logback.core.ConsoleAppender">
-            <encoder>
-                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-            </encoder>
-        </appender>
-    </springProfile>
+<springProfile name="dev">
+    <property name="LOG_LEVEL" value="INFO"/>
+</springProfile>
 
-    <!-- dev JSON appender -->
-    <springProfile name="dev">
-        <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
-            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-                <customFields>{"app":"dojangkok-backend","env":"${spring.profiles.active:-local}"}</customFields>
-            </encoder>
-        </appender>
-    </springProfile>
+<!-- 콘솔 Appender -->
+<springProfile name="local">
+    <appender name="CONSOLE_PATTERN" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+</springProfile>
 
-    <!-- 로컬 -->
-    <springProfile name="local">
-        <root level="${LOG_LEVEL}">
-            <appender-ref ref="CONSOLE_PATTERN"/>
-        </root>
-    </springProfile>
+<springProfile name="dev">
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app":"dojangkok-backend","env":"${spring.profiles.active:-local}"}</customFields>
+        </encoder>
+    </appender>
+</springProfile>
 
-    <!-- dev -->
-    <springProfile name="dev">
-        <root level="${LOG_LEVEL}">
-            <appender-ref ref="CONSOLE_JSON"/>
-        </root>
-    </springProfile>
+<!-- 파일 Appender (날짜별 분리) -->
+<springProfile name="local,dev">
+    <appender name="FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <!-- 현재 로그 파일 -->
+        <file>${LOG_PATH}/${spring.profiles.active}/application.log</file>
+
+        <!-- 날짜별 롤링 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>
+                ${LOG_PATH}/${spring.profiles.active}/application-%d{yyyy-MM-dd}.log
+            </fileNamePattern>
+
+            <!-- 30일 보관 -->
+            <maxHistory>30</maxHistory>
+
+            <!-- 전체 로그 용량 제한 -->
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+</springProfile>
+
+<!-- Root logger -->
+<springProfile name="local">
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="CONSOLE_PATTERN"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</springProfile>
+
+<springProfile name="dev">
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="CONSOLE_JSON"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</springProfile>
 
 </configuration>
