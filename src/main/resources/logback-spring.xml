@@ -48,9 +48,7 @@
 
             <!-- 날짜별 롤링 -->
             <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                <fileNamePattern>
-                    ${LOG_PATH}/${ACTIVE_PROFILE}/application-%d{yyyy-MM-dd}.log
-                </fileNamePattern>
+                <fileNamePattern>${LOG_PATH}/${ACTIVE_PROFILE}/application-%d{yyyy-MM-dd}.log</fileNamePattern>
 
                 <!-- 30일 보관 -->
                 <maxHistory>30</maxHistory>
@@ -74,9 +72,7 @@
 
             <!-- 날짜별 롤링 -->
             <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-                <fileNamePattern>
-                    ${LOG_PATH}/${ACTIVE_PROFILE}/application-%d{yyyy-MM-dd}.log
-                </fileNamePattern>
+                <fileNamePattern>${LOG_PATH}/${ACTIVE_PROFILE}/application-%d{yyyy-MM-dd}.log</fileNamePattern>
 
                 <!-- 30일 보관 -->
                 <maxHistory>30</maxHistory>
