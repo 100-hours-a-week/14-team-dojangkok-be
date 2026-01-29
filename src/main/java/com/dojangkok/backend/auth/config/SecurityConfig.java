@@ -45,6 +45,8 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
+                        .requestMatchers("/api/oauth2/**", "/api/login/**").permitAll()
+                        .requestMatchers("/api/v1/oauth2/**", "/api/v1/login/**").permitAll()
                         .requestMatchers("/api/v1/auth/token", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/internal/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
