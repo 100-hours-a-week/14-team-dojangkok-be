@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/internal/callbacks")
+@RequestMapping("/api/internal/callbacks")
 public class InternalCallbackController {
 
     private final ChecklistTemplateService checklistTemplateService;
