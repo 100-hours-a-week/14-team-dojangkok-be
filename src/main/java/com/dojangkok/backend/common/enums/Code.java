@@ -50,7 +50,11 @@ public enum Code {
     EASY_CONTRACT_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "EASY_CONTRACT_NOT_FOUND", "해당 쉬운 계약서가 존재하지 않습니다."),
     EASY_CONTRACT_ACCESS_DENIED(HttpStatus.FORBIDDEN.value(), "EASY_CONTRACT_ACCESS_DENIED", "해당 쉬운 계약서에 대한 권한이 없습니다."),
     EASY_CONTRACT_TITLE_EMPTY(HttpStatus.BAD_REQUEST.value(), "EASY_CONTRACT_TITLE_EMPTY", "쉬운 계약서의 제목이 비어있습니다."),
-    EASY_CONTRACT_TITLE_TOO_LONG(HttpStatus.UNPROCESSABLE_CONTENT.value(), "EASY_CONTRACT_TITLE_TOO_LONG", "쉬운 계약서 제목의 최대 길이를 초과하였습니다.");
+    EASY_CONTRACT_TITLE_TOO_LONG(HttpStatus.UNPROCESSABLE_CONTENT.value(), "EASY_CONTRACT_TITLE_TOO_LONG", "쉬운 계약서 제목의 최대 길이를 초과하였습니다."),
+
+    // AI 서비스 관련 오류
+    AI_SERVICE_ERROR(HttpStatus.BAD_GATEWAY.value(), "AI_SERVICE_ERROR", "AI 서비스에서 오류가 발생하였습니다."),
+    AI_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE.value(), "AI_SERVICE_UNAVAILABLE", "AI 서비스에 연결할 수 없습니다.");
 
     private final int status;
     private final String code;
