@@ -49,6 +49,7 @@ public class EasyContractService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new GeneralException(Code.MEMBER_NOT_FOUND));
         EasyContract easyContract = EasyContract.createEasyContract(member, null, null);
+        easyContractRepository.saveAndFlush(easyContract);
 
         // 파일 검증 및 조회
         Map<Long, FileAsset> fileAssetMap = fileAssetValidator.validateAndGetFileAssets(requestDto.getFileAssetIds());
