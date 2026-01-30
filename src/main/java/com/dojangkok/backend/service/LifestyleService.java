@@ -38,10 +38,6 @@ public class LifestyleService {
 
         List<String> lifestyleItems =  createLifestyleRequestDto.getLifestyleItems();
 
-        if (lifestyleItems == null || lifestyleItems.isEmpty()) {
-            return lifestyleMapper.toEmptyResponse(memberId);
-        }
-
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new GeneralException(Code.MEMBER_NOT_FOUND));
 
