@@ -51,11 +51,13 @@ public class EasyContractService {
         EasyContract easyContract = EasyContract.createEasyContract(member, null, null);
         easyContractRepository.saveAndFlush(easyContract);
 
+        List<Long> fileAssetIds = requestDto.getFileAssetIds();
+
         // 파일 검증 및 조회
-        Map<Long, FileAsset> fileAssetMap = fileAssetValidator.validateAndGetFileAssets(requestDto.getFileAssetIds());
+        Map<Long, FileAsset> fileAssetMap = fileAssetValidator.validateAndGetFileAssets(fileAssetIds);
 
         // AI 요청용 DTO 생성
-        List<EasyContractFileDto> fileDtos = requestDto.getFileAssetIds().stream()
+        List<EasyContractFileDto> fileDtos = fileAssetIds.stream()
                 .map(fileAssetId -> {
                     FileAsset fileAsset = fileAssetMap.get(fileAssetId);
                     String presignedUrl = s3Service.generatePresignedDownloadUrl(fileAsset.getFileKey());
@@ -81,7 +83,11 @@ public class EasyContractService {
         easyContract.updateContent(title, content);
         easyContractRepository.save(easyContract);
 
-        log.info("EasyContract created: id={}, memberId={}, title={}", easyContract.getId(), memberId, title);
+        // AI 분석에 사용된 파일들 자동 첨부
+        attachFilesToEasyContract(easyContract, fileAssetIds);
+
+        log.info("EasyContract created: id={}, memberId={}, title={}, fileCount={}", 
+                easyContract.getId(), memberId, title, fileAssetIds.size());
 
         return easyContractMapper.toEasyContractCreateResponseDto(easyContract);
     }
@@ -172,23 +178,6 @@ public class EasyContractService {
         easyContract.softDelete();
 
         log.info("EasyContract deleted: id={}, memberId={}", easyContractId, memberId);
-    }
-
-    @Transactional
-    public void deleteEasyContractFile(Long memberId, Long easyContractId, Long fileAssetId) {
-        getEasyContractWithAccessCheck(memberId, easyContractId);
-
-        EasyContractFile easyContractFile = easyContractFileRepository.findByFileAssetIdAndEasyContractId(fileAssetId, easyContractId)
-                .orElseThrow(() -> new GeneralException(Code.EASY_CONTRACT_FILE_NOT_FOUND));
-
-        // FileAsset soft delete (배치 작업에서 S3 파일 삭제 예정)
-        FileAsset fileAsset = easyContractFile.getFileAsset();
-        fileAsset.softDelete();
-
-        // EasyContractFile hard delete
-        easyContractFileRepository.delete(easyContractFile);
-
-        log.info("EasyContractFile deleted: fileAssetId={}, easyContractId={}, fileAssetId={}", fileAssetId, easyContractId, fileAsset.getId());
     }
 
     private String createTitle(Long memberId) {
