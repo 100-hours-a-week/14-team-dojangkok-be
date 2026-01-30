@@ -174,6 +174,23 @@ public class EasyContractService {
         log.info("EasyContract deleted: id={}, memberId={}", easyContractId, memberId);
     }
 
+    @Transactional
+    public void deleteEasyContractFile(Long memberId, Long easyContractId, Long fileAssetId) {
+        getEasyContractWithAccessCheck(memberId, easyContractId);
+
+        EasyContractFile easyContractFile = easyContractFileRepository.findByFileAssetIdAndEasyContractId(fileAssetId, easyContractId)
+                .orElseThrow(() -> new GeneralException(Code.EASY_CONTRACT_FILE_NOT_FOUND));
+
+        // FileAsset soft delete (배치 작업에서 S3 파일 삭제 예정)
+        FileAsset fileAsset = easyContractFile.getFileAsset();
+        fileAsset.softDelete();
+
+        // EasyContractFile hard delete
+        easyContractFileRepository.delete(easyContractFile);
+
+        log.info("EasyContractFile deleted: fileAssetId={}, easyContractId={}, fileAssetId={}", fileAssetId, easyContractId, fileAsset.getId());
+    }
+
     private String createTitle(Long memberId) {
         int completedCount = easyContractRepository.countCompletedByMemberId(memberId);
         return TITLE_PREFIX + (completedCount + 1);

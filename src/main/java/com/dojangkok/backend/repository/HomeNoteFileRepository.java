@@ -49,7 +49,5 @@ public interface HomeNoteFileRepository extends JpaRepository<HomeNoteFile, Long
     @Query("SELECT MAX(hnf.sortOrder) FROM HomeNoteFile hnf WHERE hnf.homeNote.id = :homeNoteId")
     Optional<Integer> findMaxSortOrderByHomeNoteId(@Param("homeNoteId") Long homeNoteId);
 
-    Optional<HomeNoteFile> findByIdAndHomeNoteId(Long id, Long homeNoteId);
-
-    boolean existsByFileAssetId(Long fileAssetId);
+    Optional<HomeNoteFile> findByFileAssetIdAndHomeNoteId(Long id, Long homeNoteId);
 }
