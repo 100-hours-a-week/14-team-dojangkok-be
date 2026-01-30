@@ -188,18 +188,19 @@ public class HomeNoteService {
 
     @Transactional
     public void deleteHomeNoteFile(Long memberId, Long homeNoteId, Long fileId) {
-        HomeNote homeNote = getHomeNoteWithAccessCheck(memberId, homeNoteId);
+        getHomeNoteWithAccessCheck(memberId, homeNoteId);
 
-        HomeNoteFile homeNoteFile = homeNoteFileRepository.findById(fileId)
+        HomeNoteFile homeNoteFile = homeNoteFileRepository.findByFileAssetIdAndHomeNoteId(fileId, homeNoteId)
                 .orElseThrow(() -> new GeneralException(Code.HOME_NOTE_FILE_NOT_FOUND));
 
-        if (!homeNoteFile.getHomeNote().getId().equals(homeNoteId)) {
-            throw new GeneralException(Code.HOME_NOTE_FILE_RELATION_CONFLICT);
-        }
+        // FileAsset soft delete (배치 작업에서 S3 파일 삭제 예정)
+        FileAsset fileAsset = homeNoteFile.getFileAsset();
+        fileAsset.softDelete();
 
+        // HomeNoteFile hard delete
         homeNoteFileRepository.delete(homeNoteFile);
 
-        log.info("HomeNoteFile deleted: fileId={}, homeNoteId={}", fileId, homeNoteId);
+        log.info("HomeNoteFile deleted: fileId={}, homeNoteId={}, fileAssetId={}", fileId, homeNoteId, fileAsset.getId());
     }
 
     private HomeNote getHomeNoteWithAccessCheck(Long memberId, Long homeNoteId) {
