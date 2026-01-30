@@ -16,6 +16,9 @@ public class TokenExchangeResponseDto {
     @JsonProperty("expires_in")
     private int expiresIn;
 
+    @JsonProperty("is_nickname_exists")
+    private boolean nicknameExists;
+
     @JsonProperty("is_new_user")
     private boolean newUser;
 }

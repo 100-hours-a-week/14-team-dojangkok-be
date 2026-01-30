@@ -61,14 +61,13 @@ public class HomeNoteController {
         return new DataResponseDto<>(Code.SUCCESS, "집 노트 이미지가 성공적으로 첨부되었습니다.", responseDto);
     }
 
-    @DeleteMapping("/{homeNoteId}/file/{fileId}")
-    public ResponseEntity<Void> deleteHomeNoteFile(@CurrentMemberId Long memberId, @PathVariable Long homeNoteId,
-                                                   @PathVariable Long fileId) {
+    @DeleteMapping("/{homeNoteId}/files/{fileId}")
+    public ResponseEntity<Void> deleteHomeNoteFile(@CurrentMemberId Long memberId, @PathVariable Long homeNoteId, @PathVariable Long fileId) {
         homeNoteService.deleteHomeNoteFile(memberId, homeNoteId, fileId);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/checklists/template")
+    @GetMapping("/checklists/templates")
     public DataResponseDto<ChecklistTemplateResponseDto> getChecklistTemplate(@CurrentMemberId Long memberId) {
         ChecklistTemplateResponseDto responseDto = checklistService.getChecklistTemplate(memberId);
         return new DataResponseDto<>(Code.SUCCESS, "체크리스트 템플릿 조회에 성공하였습니다.", responseDto);

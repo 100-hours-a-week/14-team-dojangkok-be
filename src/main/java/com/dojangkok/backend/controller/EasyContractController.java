@@ -62,4 +62,10 @@ public class EasyContractController {
         easyContractService.deleteEasyContract(memberId, easyContractId);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{easyContractId}/files/{fileAssetId}")
+    public ResponseEntity<Void> deleteEasyContractFile(@CurrentMemberId Long memberId, @PathVariable Long easyContractId, @PathVariable Long fileAssetId) {
+        easyContractService.deleteEasyContractFile(memberId, easyContractId, fileAssetId);
+        return ResponseEntity.noContent().build();
+    }
 }

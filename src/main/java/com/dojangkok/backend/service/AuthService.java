@@ -33,6 +33,7 @@ public class AuthService {
                 .orElseThrow(() -> new GeneralException(Code.INVALID_EXCHANGE_CODE));
 
         Long memberId = data.memberId();
+        boolean isNicknameExists = data.isNicknameExists();
         boolean isNewUser = data.isNewUser();
 
         String accessToken = jwtProvider.createAccessToken(memberId);
@@ -43,6 +44,7 @@ public class AuthService {
         TokenExchangeResponseDto token = TokenExchangeResponseDto.builder()
                 .accessToken(accessToken)
                 .expiresIn(jwtProvider.getAccessExpMin() * 60)
+                .nicknameExists(isNicknameExists)
                 .newUser(isNewUser)
                 .build();
 

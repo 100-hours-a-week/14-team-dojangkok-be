@@ -33,6 +33,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final SocialAuthRepository socialAuthRepository;
     private final MemberRepository memberRepository;
 
+    /**
+     * 카카오 서버로부터 사용자 정보 받음
+     */
     @Override
     public OAuth2User loadUser(OAuth2UserRequest req) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(req);
