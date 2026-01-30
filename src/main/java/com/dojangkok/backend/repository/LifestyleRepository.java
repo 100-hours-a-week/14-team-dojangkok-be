@@ -14,8 +14,6 @@ public interface LifestyleRepository extends JpaRepository<Lifestyle, Long> {
 
     Optional<Lifestyle> findByMemberId(Long memberId);
 
-    boolean existsByMemberId(Long memberId);
-
     void deleteByMemberId(Long memberId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
