@@ -41,7 +41,6 @@ public class HomeNoteService {
     private final HomeNoteRepository homeNoteRepository;
     private final HomeNoteFileRepository homeNoteFileRepository;
     private final MemberRepository memberRepository;
-    private final FileAssetRepository fileAssetRepository;
     private final ChecklistService checklistService;
     private final S3Service s3Service;
     private final HomeNoteMapper homeNoteMapper;
