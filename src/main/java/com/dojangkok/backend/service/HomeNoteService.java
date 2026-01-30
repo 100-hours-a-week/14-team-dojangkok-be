@@ -36,12 +36,11 @@ public class HomeNoteService {
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PREVIEW_IMAGES = 10;
     private static final int MAX_TITLE_LENGTH = 50;
-    private static final int MAX_ATTACH_ITEMS = 100;
+    private static final int MAX_ATTACH_ITEMS = 50;
 
     private final HomeNoteRepository homeNoteRepository;
     private final HomeNoteFileRepository homeNoteFileRepository;
     private final MemberRepository memberRepository;
-    private final FileAssetRepository fileAssetRepository;
     private final ChecklistService checklistService;
     private final S3Service s3Service;
     private final HomeNoteMapper homeNoteMapper;
