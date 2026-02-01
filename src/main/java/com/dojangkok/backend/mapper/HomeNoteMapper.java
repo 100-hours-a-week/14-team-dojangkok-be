@@ -116,13 +116,4 @@ public class HomeNoteMapper {
                 .build();
     }
 
-    public FileUploadCompleteItemResponseDto toFileUploadCompleteItemResponseDto(FileAsset fileAsset, String presignedUrl) {
-        return FileUploadCompleteItemResponseDto.builder()
-                .fileAssetId(fileAsset.getId())
-                .fileKey(fileAsset.getFileKey())
-                .fileType(fileAsset.getFileType())
-                .status(fileAsset.getStatus())
-                .presignedUrl(presignedUrl)
-                .build();
-    }
 }

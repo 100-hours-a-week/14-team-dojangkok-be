@@ -75,24 +75,6 @@ public class S3Service {
     }
 
     /**
-     * S3에 파일이 존재하는지 확인
-     - 추후에 해당 메서드 제거하고 검증로직으로 빼기
-     */
-    public boolean doesObjectExist(String fileKey) {
-        try {
-            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(fileKey)
-                    .build();
-
-            s3Client.headObject(headObjectRequest);
-            return true;
-        } catch (NoSuchKeyException e) {
-            return false;
-        }
-    }
-
-    /**
      * S3 파일 메타데이터 조회
      */
     public Optional<HeadObjectResponse> getObjectMetadata(String fileKey) {
