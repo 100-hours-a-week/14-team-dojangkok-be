@@ -27,6 +27,12 @@ public enum Code {
     // 파일 관련 오류
     FILE_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "FILE_NOT_FOUND", "업로드된 파일을 찾을 수 없습니다."),
     FILE_ASSET_NOT_COMPLETED(HttpStatus.CONFLICT.value(), "FILE_ASSET_NOT_COMPLETED", "업로드가 완료되지 않은 파일이 포함되어 있습니다."),
+    FILE_SIZE_EXCEEDED(HttpStatus.UNPROCESSABLE_CONTENT.value(), "FILE_SIZE_EXCEEDED", "파일 용량이 제한을 초과하였습니다."),
+    FILE_COUNT_EXCEEDED(HttpStatus.UNPROCESSABLE_CONTENT.value(), "FILE_COUNT_EXCEEDED", "최대 허용 파일 개수(50개)를 초과하였습니다."),
+    FILE_CONTENT_TYPE_NOT_ALLOWED(HttpStatus.UNPROCESSABLE_CONTENT.value(), "FILE_CONTENT_TYPE_NOT_ALLOWED", "허용되지 않는 파일 형식입니다."),
+    FILE_SIZE_MISMATCH(HttpStatus.CONFLICT.value(), "FILE_SIZE_MISMATCH", "파일 용량이 신고된 값과 일치하지 않습니다."),
+    FILE_CONTENT_TYPE_MISMATCH(HttpStatus.CONFLICT.value(), "FILE_CONTENT_TYPE_MISMATCH", "파일 형식이 신고된 값과 일치하지 않습니다."),
+    FILE_UPLOAD_NOT_COMPLETED(HttpStatus.CONFLICT.value(), "FILE_UPLOAD_NOT_COMPLETED", "S3에 파일이 업로드되지 않았습니다."),
 
     // 라이프스타일 관련 오류
     LIFESTYLE_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "LIFESTYLE_NOT_FOUND", "라이프스타일 정보를 찾을 수 없습니다."),

@@ -4,6 +4,7 @@ import com.dojangkok.backend.domain.FileAsset;
 import com.dojangkok.backend.domain.HomeNote;
 import com.dojangkok.backend.domain.HomeNoteFile;
 import com.dojangkok.backend.dto.checklist.ChecklistResponseDto;
+import com.dojangkok.backend.dto.fileasset.FileUploadCompleteItemResponseDto;
 import com.dojangkok.backend.dto.homenote.*;
 import org.springframework.stereotype.Component;
 
@@ -112,6 +113,16 @@ public class HomeNoteMapper {
                 .fileAssetId(fileAsset.getId())
                 .fileType(fileAsset.getFileType())
                 .assetStatus(fileAsset.getStatus())
+                .build();
+    }
+
+    public FileUploadCompleteItemResponseDto toFileUploadCompleteItemResponseDto(FileAsset fileAsset, String presignedUrl) {
+        return FileUploadCompleteItemResponseDto.builder()
+                .fileAssetId(fileAsset.getId())
+                .fileKey(fileAsset.getFileKey())
+                .fileType(fileAsset.getFileType())
+                .status(fileAsset.getStatus())
+                .presignedUrl(presignedUrl)
                 .build();
     }
 }
