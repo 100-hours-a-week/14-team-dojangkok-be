@@ -41,8 +41,11 @@ public class FileAsset extends BaseTimeEntity {
     )
     private FileAsset thumbnail;
 
-    @Column(name = "file_key", nullable = false, length = 255)
+    @Column(name = "file_key", nullable = false)
     private String fileKey;
+
+    @Column(name = "original_file_name", nullable = false)
+    private String originalFileName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "media_type", nullable = false, length = 20)
@@ -63,30 +66,38 @@ public class FileAsset extends BaseTimeEntity {
     private LocalDateTime deletedAt;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private FileAsset(FileAsset thumbnail, String fileKey, FileType fileType,
-                       FileAssetStatus status, String contentType, Map<String, Object> metadata, LocalDateTime deletedAt) {
+    public FileAsset(Long id, FileAsset thumbnail, String fileKey, String originalFileName, FileType fileType, FileAssetStatus status,
+                     String contentType, Map<String, Object> metadata, LocalDateTime deletedAt) {
+        this.id = id;
         this.thumbnail = thumbnail;
         this.fileKey = fileKey;
+        this.originalFileName = originalFileName;
         this.fileType = fileType;
         this.status = status;
         this.contentType = contentType;
-        this.metadata = metadata == null ? new HashMap<>() : new HashMap<>(metadata);
+        this.metadata = metadata;
         this.deletedAt = deletedAt;
     }
 
-    public static FileAsset createFileAsset(String fileKey, FileType fileType,
-                                             String contentType, Map<String, Object> metadataJson) {
+    public static FileAsset createFileAsset(String fileKey, FileType fileType, String originalFileName,
+                                             String contentType, Map<String, Object> metadata) {
         return FileAsset.builder()
                 .fileKey(fileKey)
                 .fileType(fileType)
+                .originalFileName(originalFileName)
                 .status(FileAssetStatus.UPLOADING)
                 .contentType(contentType)
-                .metadata(metadataJson)
+                .metadata(metadata)
                 .build();
     }
 
     public void markCompleted() {
         this.status = FileAssetStatus.COMPLETED;
+    }
+
+    public void markFailed(String reason) {
+        this.status = FileAssetStatus.FAILED;
+        this.metadata.put("failReason", reason);
     }
 
     public void attachThumbnail(FileAsset thumbnail) {

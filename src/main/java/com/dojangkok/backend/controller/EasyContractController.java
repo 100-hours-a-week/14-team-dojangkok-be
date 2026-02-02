@@ -4,6 +4,8 @@ import com.dojangkok.backend.auth.jwt.CurrentMemberId;
 import com.dojangkok.backend.common.dto.DataResponseDto;
 import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.dto.easycontract.*;
+import com.dojangkok.backend.dto.fileasset.FileUploadCompleteRequestDto;
+import com.dojangkok.backend.service.EasyContractFileUploadService;
 import com.dojangkok.backend.service.EasyContractService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class EasyContractController {
 
     private final EasyContractService easyContractService;
+    private final EasyContractFileUploadService easyContractFileUploadService;
 
     @PostMapping
     public DataResponseDto<EasyContractCreateResponseDto> createEasyContract(@CurrentMemberId Long memberId,
@@ -37,11 +40,16 @@ public class EasyContractController {
         return new DataResponseDto<>(Code.SUCCESS, "쉬운 계약서 상세 조회에 성공하였습니다.", responseDto);
     }
 
-    @PostMapping("/{easyContractId}/files")
-    public DataResponseDto<EasyContractFileAttachResponseDto> attachFiles(@CurrentMemberId Long memberId, @PathVariable Long easyContractId,
-                                            @Valid @RequestBody EasyContractFileRequestDto easyContractFileRequestDto) {
-        EasyContractFileAttachResponseDto responseDto = easyContractService.attachFiles(memberId, easyContractId, easyContractFileRequestDto);
-        return new DataResponseDto<>(Code.SUCCESS, "쉬운 계약서 파일이 성공적으로 첨부되었습니다.", responseDto);
+    @PostMapping("/files/presigned-urls")
+    public DataResponseDto<EasyContractFileUploadResponseDto> generatePresignedUrls(@Valid @RequestBody EasyContractFileUploadRequestDto requestDto) {
+        EasyContractFileUploadResponseDto responseDto = easyContractFileUploadService.generatePresignedUrls(requestDto);
+        return new DataResponseDto<>(Code.SUCCESS, "Presigned URL 발급에 성공하였습니다.", responseDto);
+    }
+
+    @PostMapping("/files/complete")
+    public DataResponseDto<EasyContractFileCompleteResponseDto> completeFileUpload(@Valid @RequestBody FileUploadCompleteRequestDto requestDto) {
+        EasyContractFileCompleteResponseDto responseDto = easyContractFileUploadService.completeFileUpload(requestDto);
+        return new DataResponseDto<>(Code.SUCCESS, "파일 업로드 완료 처리에 성공하였습니다.", responseDto);
     }
 
     @GetMapping("/{easyContractId}/assets")
