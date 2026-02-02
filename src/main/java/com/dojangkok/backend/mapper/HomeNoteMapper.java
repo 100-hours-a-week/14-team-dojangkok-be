@@ -4,6 +4,7 @@ import com.dojangkok.backend.domain.FileAsset;
 import com.dojangkok.backend.domain.HomeNote;
 import com.dojangkok.backend.domain.HomeNoteFile;
 import com.dojangkok.backend.dto.checklist.ChecklistResponseDto;
+import com.dojangkok.backend.dto.fileasset.FileUploadCompleteItemResponseDto;
 import com.dojangkok.backend.dto.homenote.*;
 import org.springframework.stereotype.Component;
 
@@ -114,4 +115,5 @@ public class HomeNoteMapper {
                 .assetStatus(fileAsset.getStatus())
                 .build();
     }
+
 }

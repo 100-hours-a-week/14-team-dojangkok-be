@@ -121,23 +121,6 @@ public class EasyContractService {
         return easyContractMapper.toEasyContractDetailResponseDto(easyContract);
     }
 
-    @Transactional
-    public EasyContractFileAttachResponseDto attachFiles(Long memberId, Long easyContractId,
-                            EasyContractFileRequestDto easyContractFileRequestDto) {
-        EasyContract easyContract = getEasyContractWithAccessCheck(memberId, easyContractId);
-
-        List<Long> fileAssetIds = easyContractFileRequestDto.getFileAssetIds();
-
-        List<EasyContractFile> savedFiles = attachFilesToEasyContract(easyContract, fileAssetIds);
-        log.info("Files attached to EasyContract: easyContractId={}, count={}", easyContractId, fileAssetIds.size());
-
-        List<EasyContractFileAttachItemDto> items = savedFiles.stream()
-                .map(easyContractMapper::toEasyContractFileAttachItemDto)
-                .toList();
-
-        return easyContractMapper.toEasyContractFileAttachResponseDto(items);
-    }
-
     @Transactional(readOnly = true)
     public EasyContractAssetListResponseDto getEasyContractAssets(Long memberId, Long easyContractId) {
         getEasyContractWithAccessCheck(memberId, easyContractId);
@@ -185,9 +168,9 @@ public class EasyContractService {
         return TITLE_PREFIX + (completedCount + 1);
     }
 
-    private List<EasyContractFile> attachFilesToEasyContract(EasyContract easyContract, List<Long> fileAssetIds) {
+    private void attachFilesToEasyContract(EasyContract easyContract, List<Long> fileAssetIds) {
         if (fileAssetIds == null || fileAssetIds.isEmpty()) {
-            return List.of();
+            return;
         }
 
         Map<Long, FileAsset> fileAssetMap = fileAssetValidator.validateAndGetFileAssets(fileAssetIds);
@@ -207,7 +190,7 @@ public class EasyContractService {
             easyContractFiles.add(easyContractFile);
         }
 
-        return easyContractFileRepository.saveAll(easyContractFiles);
+        easyContractFileRepository.saveAll(easyContractFiles);
     }
 
     private EasyContract getEasyContractWithAccessCheck(Long memberId, Long easyContractId) {

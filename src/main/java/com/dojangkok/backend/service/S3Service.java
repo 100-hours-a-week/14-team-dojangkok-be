@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
@@ -74,23 +75,6 @@ public class S3Service {
     }
 
     /**
-     * S3에 파일이 존재하는지 확인
-     */
-    public boolean doesObjectExist(String fileKey) {
-        try {
-            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(fileKey)
-                    .build();
-
-            s3Client.headObject(headObjectRequest);
-            return true;
-        } catch (NoSuchKeyException e) {
-            return false;
-        }
-    }
-
-    /**
      * S3 파일 메타데이터 조회
      */
     public Optional<HeadObjectResponse> getObjectMetadata(String fileKey) {
@@ -103,6 +87,23 @@ public class S3Service {
             return Optional.of(s3Client.headObject(headObjectRequest));
         } catch (NoSuchKeyException e) {
             return Optional.empty();
+        }
+    }
+
+    /**
+     * S3 파일 삭제
+     */
+    public void deleteObject(String fileKey) {
+        try {
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(fileKey)
+                    .build();
+
+            s3Client.deleteObject(deleteObjectRequest);
+            log.info("Deleted S3 object: {}", fileKey);
+        } catch (Exception e) {
+            log.error("Failed to delete S3 object: {}", fileKey, e);
         }
     }
 }

@@ -15,9 +15,6 @@ public class FileUploadCompleteItemRequestDto {
     @JsonProperty("file_asset_id")
     private Long fileAssetId;
 
-    @JsonProperty("size")
-    private Long size;
-
     @JsonProperty("metadata")
     private Map<String, Object> metadata;
 }

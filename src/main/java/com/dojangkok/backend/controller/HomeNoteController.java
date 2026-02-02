@@ -4,8 +4,10 @@ import com.dojangkok.backend.auth.jwt.CurrentMemberId;
 import com.dojangkok.backend.common.dto.DataResponseDto;
 import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.dto.checklist.*;
+import com.dojangkok.backend.dto.fileasset.FileUploadCompleteRequestDto;
 import com.dojangkok.backend.dto.homenote.*;
 import com.dojangkok.backend.service.ChecklistService;
+import com.dojangkok.backend.service.HomeNoteFileUploadService;
 import com.dojangkok.backend.service.HomeNoteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class HomeNoteController {
 
     private final ChecklistService checklistService;
     private final HomeNoteService homeNoteService;
+    private final HomeNoteFileUploadService homeNoteFileUploadService;
 
     @PostMapping
     public DataResponseDto<HomeNoteCreateResponseDto> createHomeNote(@CurrentMemberId Long memberId,
@@ -43,7 +46,7 @@ public class HomeNoteController {
 
     @PatchMapping("/{homeNoteId}")
     public DataResponseDto<HomeNoteUpdateResponseDto> updateHomeNoteTitle(@CurrentMemberId Long memberId, @PathVariable Long homeNoteId,
-                                                                          @Valid @RequestBody HomeNoteUpdateRequestDto requestDto) {
+                                                                          @RequestBody @Valid HomeNoteUpdateRequestDto requestDto) {
         HomeNoteUpdateResponseDto responseDto = homeNoteService.updateHomeNoteTitle(memberId, homeNoteId, requestDto);
         return new DataResponseDto<>(Code.SUCCESS, "집 노트 제목 수정에 성공하였습니다.", responseDto);
     }
@@ -52,6 +55,19 @@ public class HomeNoteController {
     public ResponseEntity<Void> deleteHomeNote(@CurrentMemberId Long memberId, @PathVariable Long homeNoteId) {
         homeNoteService.deleteHomeNote(memberId, homeNoteId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{homeNoteId}/files/presigned-urls")
+    public DataResponseDto<HomeNoteFileUploadResponseDto> generatePresignedUrls(@PathVariable Long homeNoteId,
+                                                                                @RequestBody @Valid HomeNoteFileUploadRequestDto requestDto) {
+        HomeNoteFileUploadResponseDto responseDto = homeNoteFileUploadService.generatePresignedUrls(homeNoteId, requestDto);
+        return new DataResponseDto<>(Code.SUCCESS, "Presigned URL 발급에 성공하였습니다.", responseDto);
+    }
+
+    @PostMapping("/files/complete")
+    public DataResponseDto<HomeNoteFileCompleteResponseDto> completeFileUpload(@Valid @RequestBody FileUploadCompleteRequestDto requestDto) {
+        HomeNoteFileCompleteResponseDto responseDto = homeNoteFileUploadService.completeFileUpload(requestDto);
+        return new DataResponseDto<>(Code.SUCCESS, "파일 업로드 완료 처리에 성공하였습니다.", responseDto);
     }
 
     @PostMapping("/{homeNoteId}/files")
