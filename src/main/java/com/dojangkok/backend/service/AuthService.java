@@ -6,11 +6,12 @@ import com.dojangkok.backend.auth.token.RedisExchangeCodeStore.ExchangeData;
 import com.dojangkok.backend.auth.token.RedisRefreshTokenStore;
 import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.common.exception.GeneralException;
-import com.dojangkok.backend.domain.enums.OnboardingStatus;
+import com.dojangkok.backend.domain.Member;
 import com.dojangkok.backend.dto.auth.TokenExchangeInfoDto;
 import com.dojangkok.backend.dto.auth.TokenExchangeResponseDto;
 import com.dojangkok.backend.dto.auth.TokenRefreshResponseDto;
 import com.dojangkok.backend.dto.auth.TokenResponseDto;
+import com.dojangkok.backend.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
@@ -27,12 +28,16 @@ public class AuthService {
     private final RedisExchangeCodeStore exchangeCodeStore;
     private final RedisRefreshTokenStore refreshTokenStore;
     private final JwtProvider jwtProvider;
+    private final MemberRepository memberRepository;
 
     @Transactional
     public TokenExchangeResponseDto exchangeToken(String code) {
         ExchangeData data = exchangeCodeStore.consume(code)
                 .orElseThrow(() -> new GeneralException(Code.INVALID_EXCHANGE_CODE));
         Long memberId = data.memberId();
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(Code.MEMBER_NOT_FOUND));
 
         String accessToken = jwtProvider.createAccessToken(memberId);
         String refreshToken = jwtProvider.createRefreshToken(memberId);
@@ -46,7 +51,7 @@ public class AuthService {
 
         TokenExchangeInfoDto tokenExchangeInfoDto = TokenExchangeInfoDto.builder()
                 .token(tokenResponseDto)
-                .onboardingStatus(OnboardingStatus.NICKNAME)
+                .onboardingStatus(member.getOnboardingStatus())
                 .build();
 
         return TokenExchangeResponseDto.builder()
