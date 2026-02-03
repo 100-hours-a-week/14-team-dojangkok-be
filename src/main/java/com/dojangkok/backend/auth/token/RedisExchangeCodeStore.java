@@ -56,8 +56,6 @@ public class RedisExchangeCodeStore {
     }
 
     public record ExchangeData(
-            Long memberId,
-            boolean isNicknameExists,
-            boolean isNewUser
+            Long memberId
     ) {}
 }
