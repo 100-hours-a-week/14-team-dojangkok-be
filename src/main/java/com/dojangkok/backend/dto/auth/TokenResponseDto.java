@@ -8,10 +8,11 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class TokenRefreshResult {
+public class TokenResponseDto {
 
-    @JsonProperty("token")
-    private TokenRefreshResponseDto token;
+    @JsonProperty("access_token")
+    private String accessToken;
 
-    private String refreshTokenCookie;
+    @JsonProperty("expires_in")
+    private int expiresIn;
 }

@@ -1,5 +1,6 @@
 package com.dojangkok.backend.dto.member;
 
+import com.dojangkok.backend.domain.enums.OnboardingStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +14,9 @@ public class ProfileResponseDto {
 
     @JsonProperty("nickname")
     private String nickname;
+
+    @JsonProperty("onboarding_status")
+    private OnboardingStatus onboardingStatus;
 
     @JsonProperty("profile_image_url")
     private String profileImageUrl;

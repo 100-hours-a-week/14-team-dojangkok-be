@@ -2,6 +2,7 @@ package com.dojangkok.backend.domain;
 
 import com.dojangkok.backend.common.entity.BaseTimeEntity;
 import com.dojangkok.backend.domain.enums.MemberStatus;
+import com.dojangkok.backend.domain.enums.OnboardingStatus;
 import com.dojangkok.backend.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -48,6 +49,10 @@ public class Member extends BaseTimeEntity {
     @Column(name = "member_status", nullable = false, length = 20)
     private MemberStatus memberStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "onboarding_status", nullable = false, length = 20)
+    private OnboardingStatus onboardingStatus;
+
     @Column(name = "profile_image")
     private String profileImage;
 
@@ -55,12 +60,13 @@ public class Member extends BaseTimeEntity {
     private LocalDateTime lastLoggedInAt;
 
     @Builder
-    private Member(String nickname, String email, Role role, MemberStatus memberStatus, String profileImage, LocalDateTime lastLoggedInAt) {
+    private Member(String nickname, String email, Role role, MemberStatus memberStatus, OnboardingStatus onboardingStatus, String profileImage, LocalDateTime lastLoggedInAt) {
         this.nickname = nickname;
         this.email = email;
         this.role = role;
         this.memberStatus = memberStatus;
         this.profileImage = profileImage;
+        this.onboardingStatus = onboardingStatus;
         this.lastLoggedInAt = lastLoggedInAt;
     }
 
@@ -71,9 +77,14 @@ public class Member extends BaseTimeEntity {
                 .email(email)
                 .role(role)
                 .memberStatus(MemberStatus.ACTIVE)
+                .onboardingStatus(OnboardingStatus.NICKNAME)
                 .profileImage(profileImage)
                 .lastLoggedInAt(LocalDateTime.now())
                 .build();
+    }
+
+    public void updateOnboardingStatus(OnboardingStatus onboardingStatus) {
+        this.onboardingStatus = onboardingStatus;
     }
 
     public void updateNickname(String nickname) {

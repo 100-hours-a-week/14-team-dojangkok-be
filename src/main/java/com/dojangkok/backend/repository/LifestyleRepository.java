@@ -13,7 +13,6 @@ import java.util.Optional;
 public interface LifestyleRepository extends JpaRepository<Lifestyle, Long> {
 
     Optional<Lifestyle> findByMemberId(Long memberId);
-
     void deleteByMemberId(Long memberId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

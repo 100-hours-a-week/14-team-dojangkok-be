@@ -6,6 +6,7 @@ import com.dojangkok.backend.domain.Lifestyle;
 import com.dojangkok.backend.domain.LifestyleItem;
 import com.dojangkok.backend.domain.LifestyleVersion;
 import com.dojangkok.backend.domain.Member;
+import com.dojangkok.backend.domain.enums.OnboardingStatus;
 import com.dojangkok.backend.dto.lifestyle.LifestyleRequestDto;
 import com.dojangkok.backend.dto.lifestyle.LifestyleResponseDto;
 import com.dojangkok.backend.event.LifestyleCreatedEvent;
@@ -36,14 +37,18 @@ public class LifestyleService {
     @Transactional
     public LifestyleResponseDto createLifestyle(Long memberId, LifestyleRequestDto createLifestyleRequestDto) {
 
-        List<String> lifestyleItems =  createLifestyleRequestDto.getLifestyleItems();
-
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new GeneralException(Code.MEMBER_NOT_FOUND));
 
         Lifestyle lifestyle = lifestyleRepository.findByMemberId(memberId)
-                .orElseGet(() -> createNewLifestyle(member));
+                .orElse(null);
 
+        if (lifestyle == null) {
+            lifestyle = createNewLifestyle(member);
+            member.updateOnboardingStatus(OnboardingStatus.COMPLETE);
+        }
+
+        List<String> lifestyleItems =  createLifestyleRequestDto.getLifestyleItems();
         int nextVersionNo = getNextVersionNo(lifestyle.getId());
 
         LifestyleVersion lifestyleVersion = LifestyleVersion.createLifestyleVersion(lifestyle, nextVersionNo);
@@ -57,21 +62,25 @@ public class LifestyleService {
         // 이벤트 발행 - 트랜잭션 커밋 후 비동기로 체크리스트 생성
         eventPublisher.publishEvent(new LifestyleCreatedEvent(lifestyleVersion.getId(), lifestyleItems));
 
-        return lifestyleMapper.toLifestyleResponseDto(memberId, lifestyleItemsList);
+        return lifestyleMapper.toLifestyleResponseDto(member, lifestyleItemsList);
     }
 
     @Transactional(readOnly = true)
     public LifestyleResponseDto getLifestyle(Long memberId) {
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new GeneralException(Code.MEMBER_NOT_FOUND));
+
         Optional<Lifestyle> lifestyle = lifestyleRepository.findByMemberId(memberId);
 
         if (lifestyle.isEmpty() || lifestyle.get().getCurrentVersion() == null) {
-            return lifestyleMapper.toEmptyResponse(memberId);
+            return lifestyleMapper.toEmptyResponse(member);
         }
 
         List<LifestyleItem> lifestyleItems = lifestyleItemRepository
                 .findAllByLifestyleVersionId(lifestyle.get().getCurrentVersion().getId());
 
-        return lifestyleMapper.toLifestyleResponseDto(memberId, lifestyleItems);
+        return lifestyleMapper.toLifestyleResponseDto(member, lifestyleItems);
     }
 
     private Lifestyle createNewLifestyle(Member member) {
