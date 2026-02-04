@@ -6,6 +6,7 @@ import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.dto.lifestyle.LifestyleRequestDto;
 import com.dojangkok.backend.dto.lifestyle.LifestyleResponseDto;
 import com.dojangkok.backend.service.LifestyleService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +19,7 @@ public class LifestyleController {
 
     @PostMapping
     public DataResponseDto<LifestyleResponseDto> createLifestyle(@CurrentMemberId Long memberId,
-                                                                 @RequestBody LifestyleRequestDto lifestyleRequestDto) {
+                                                                 @Valid @RequestBody LifestyleRequestDto lifestyleRequestDto) {
         LifestyleResponseDto lifestyleResponseDto = lifestyleService.createLifestyle(memberId, lifestyleRequestDto);
         return new DataResponseDto<>(Code.CREATED_SUCCESS, "라이프스타일 생성에 성공하였습니다.", lifestyleResponseDto);
     }
