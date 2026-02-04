@@ -38,6 +38,9 @@ public class Member extends BaseTimeEntity {
     @Column(name = "nickname", length = 30)
     private String nickname;
 
+    @Column(name = "username", length = 30)
+    private String username;
+
     @Column(name = "email", length = 100)
     private String email;
 
@@ -60,9 +63,10 @@ public class Member extends BaseTimeEntity {
     private LocalDateTime lastLoggedInAt;
 
     @Builder
-    private Member(String nickname, String email, Role role, MemberStatus memberStatus, OnboardingStatus onboardingStatus, String profileImage, LocalDateTime lastLoggedInAt) {
+    private Member(String nickname, String username, String email, Role role, MemberStatus memberStatus, OnboardingStatus onboardingStatus, String profileImage, LocalDateTime lastLoggedInAt) {
         this.nickname = nickname;
         this.email = email;
+        this.username = username;
         this.role = role;
         this.memberStatus = memberStatus;
         this.profileImage = profileImage;
@@ -70,12 +74,13 @@ public class Member extends BaseTimeEntity {
         this.lastLoggedInAt = lastLoggedInAt;
     }
 
-    public static Member createMember(String nickname, String email, Role role, String profileImage
+    public static Member createMember(String nickname, String email, Role role, String username, String profileImage
     ) {
         return Member.builder()
                 .nickname(nickname)
                 .email(email)
                 .role(role)
+                .username(username)
                 .memberStatus(MemberStatus.ACTIVE)
                 .onboardingStatus(OnboardingStatus.NICKNAME)
                 .profileImage(profileImage)

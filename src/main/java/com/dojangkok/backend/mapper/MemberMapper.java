@@ -20,6 +20,7 @@ public class MemberMapper {
         return ProfileResponseDto.builder()
                 .memberId(member.getId())
                 .nickname(member.getNickname())
+                .username(member.getUsername())
                 .onboardingStatus(member.getOnboardingStatus())
                 .profileImageUrl(member.getProfileImage())
                 .build();

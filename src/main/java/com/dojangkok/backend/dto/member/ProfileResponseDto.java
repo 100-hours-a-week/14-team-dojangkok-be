@@ -15,6 +15,9 @@ public class ProfileResponseDto {
     @JsonProperty("nickname")
     private String nickname;
 
+    @JsonProperty("username")
+    private String username;
+
     @JsonProperty("onboarding_status")
     private OnboardingStatus onboardingStatus;
 
