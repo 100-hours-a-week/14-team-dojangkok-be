@@ -7,6 +7,7 @@ import java.util.Map;
 public record OAuthProfile(
         Provider provider,
         String providerId,
+        String username,
         String profileImageUrl,
         Map<String, Object> attributes
 ) {}

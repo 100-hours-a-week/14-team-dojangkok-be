@@ -78,7 +78,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private SocialAuth createMemberAndLink(OAuthProfile profile) {
-        Member member = Member.createMember(null, null, Role.USER, profile.profileImageUrl());
+        Member member = Member.createMember(null, null, Role.USER, profile.username(), profile.profileImageUrl());
         memberRepository.save(member);
 
         SocialAuth socialAuth = createSocialAuth(

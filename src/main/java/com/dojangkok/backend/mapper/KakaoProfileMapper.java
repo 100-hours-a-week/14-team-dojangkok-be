@@ -19,8 +19,9 @@ public class KakaoProfileMapper implements OAuthProfileMapper {
         String providerId = String.valueOf(attrs.get("id"));
         Map<String, Object> account = (Map<String, Object>) attrs.getOrDefault("kakao_account", Map.of());
         Map<String, Object> profile = (Map<String, Object>) account.getOrDefault("profile", Map.of());
+        String username = (String) profile.get("nickname");
         String img = (String) profile.get("profile_image_url");
 
-        return new OAuthProfile(Provider.KAKAO, providerId, img, attrs);
+        return new OAuthProfile(Provider.KAKAO, providerId, username, img, attrs);
     }
 }
