@@ -2,7 +2,6 @@ package com.dojangkok.backend.auth.oauth.handler;
 
 import com.dojangkok.backend.auth.token.RedisExchangeCodeStore;
 import com.dojangkok.backend.auth.token.RedisExchangeCodeStore.ExchangeData;
-import com.dojangkok.backend.repository.MemberRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,6 @@ import java.util.UUID;
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private final RedisExchangeCodeStore exchangeCodeStore;
-    private final MemberRepository memberRepository;
 
     @Value("${app.oauth2.success-redirect}")
     private String successRedirect;
@@ -41,14 +39,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         DefaultOAuth2User principal = (DefaultOAuth2User) authentication.getPrincipal();
         Long memberId = ((Number) Objects.requireNonNull(principal).getAttributes().get("memberId")).longValue();
-        boolean isNicknameExists = isNicknameExists(memberId);
         boolean isNewUser = (Boolean) principal.getAttributes().get("isNewUser");
 
         log.info("memberId: {}, isNewUser: {}", memberId, isNewUser);
 
         // 일회성 교환 코드 생성
         String exchangeCode = UUID.randomUUID().toString();
-        exchangeCodeStore.save(exchangeCode, new ExchangeData(memberId, isNicknameExists, isNewUser));
+        exchangeCodeStore.save(exchangeCode, new ExchangeData(memberId));
 
         log.info("교환 코드 저장 완료: {}", exchangeCode);
 
@@ -63,7 +60,4 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         response.sendRedirect(redirectUrl);
     }
 
-    private boolean isNicknameExists(Long memberId) {
-        return memberRepository.existsNicknameById(memberId);
-    }
 }

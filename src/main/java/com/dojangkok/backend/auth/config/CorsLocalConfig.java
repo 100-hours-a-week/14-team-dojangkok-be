@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Configuration
-@Profile("local")
+@Profile({"local", "test"})
 public class CorsLocalConfig {
 
     @Value("${app.cors.allowed-origins}")

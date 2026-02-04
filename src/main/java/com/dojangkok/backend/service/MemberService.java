@@ -4,6 +4,7 @@ import com.dojangkok.backend.auth.token.RedisRefreshTokenStore;
 import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.common.exception.GeneralException;
 import com.dojangkok.backend.domain.*;
+import com.dojangkok.backend.domain.enums.OnboardingStatus;
 import com.dojangkok.backend.dto.member.UpdateNicknameRequestDto;
 import com.dojangkok.backend.dto.member.UpdateNicknameResponseDto;
 import com.dojangkok.backend.dto.member.ProfileResponseDto;
@@ -42,11 +43,16 @@ public class MemberService {
 
     @Transactional
     public UpdateNicknameResponseDto updateNickname(Long memberId, UpdateNicknameRequestDto updateNicknameRequestDto) {
-        String nickname = updateNicknameRequestDto.getNickname();
-        validateNickname(nickname);
 
         Member member = memberRepository.findById(memberId)
-                        .orElseThrow(() -> new GeneralException(Code.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new GeneralException(Code.MEMBER_NOT_FOUND));
+
+        if (member.getNickname() == null) {
+            member.updateOnboardingStatus(OnboardingStatus.LIFESTYLE);
+        }
+
+        String nickname = updateNicknameRequestDto.getNickname();
+        validateNickname(nickname);
         member.updateNickname(nickname);
 
         return memberMapper.toUpdateNicknameResponse(member, nickname);
