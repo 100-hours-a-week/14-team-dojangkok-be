@@ -31,9 +31,8 @@ public class LifestyleEventListener {
                     event.lifestyleItems()
             );
         } catch (Exception e) {
-            log.error("Failed to handle LifestyleCreatedEvent for lifestyleVersionId: {}",
-                    event.lifestyleVersionId(), e);
-            // 여기서 재시도 로직이나 DLQ 처리 등을 추가할 수 있음
+            log.error("Failed to handle LifestyleCreatedEvent for lifestyleVersionId: {}", event.lifestyleVersionId(), e);
+            // TODO : 여기서 재시도 로직 추가
         }
     }
 }

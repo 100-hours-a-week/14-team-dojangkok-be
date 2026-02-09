@@ -45,6 +45,15 @@ public class ChecklistTemplateService {
         return checklistTemplateRepository.save(checklistTemplate);
     }
 
+    @Transactional
+    public void handleGenerationFailure(Long lifestyleVersionId) {
+        checklistTemplateRepository.findByLifestyleVersionId(lifestyleVersionId)
+                .ifPresent(template -> {
+                    template.updateStatus(ChecklistStatus.FAILED);
+                    checklistTemplateRepository.save(template);
+                });
+    }
+
     private void saveChecklistTemplateItems(ChecklistTemplate checklistTemplate, List<String> checklistItems) {
         List<ChecklistTemplateItem> items = checklistItems.stream()
                 .map(content -> ChecklistTemplateItem.createChecklistTemplateItem(content, checklistTemplate))
@@ -72,12 +81,4 @@ public class ChecklistTemplateService {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handleGenerationFailure(Long lifestyleVersionId) {
-        checklistTemplateRepository.findByLifestyleVersionId(lifestyleVersionId)
-                .ifPresent(template -> {
-                    template.updateStatus(ChecklistStatus.FAILED);
-                    checklistTemplateRepository.save(template);
-                });
-    }
 }
