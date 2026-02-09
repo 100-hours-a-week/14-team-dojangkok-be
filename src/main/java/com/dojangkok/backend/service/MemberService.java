@@ -77,7 +77,7 @@ public class MemberService {
         propertyPostRepository.updateMemberIdByMemberId(memberId, WITHDRAWN_MEMBER_ID);
 
         // 3. 관련 데이터 삭제
-        deleteBookmarks(memberId);
+        bookmarkRepository.deleteAllByMemberId(memberId);
         deleteChecklists(memberId);
         deleteHomeNotes(memberId);
         deleteEasyContracts(memberId);
@@ -92,10 +92,6 @@ public class MemberService {
 
         // 6. Member 삭제
         memberRepository.delete(member);
-    }
-
-    private void deleteBookmarks(Long memberId) {
-        bookmarkRepository.deleteAllByMemberId(memberId);
     }
 
     private void deleteChecklists(Long memberId) {

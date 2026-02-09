@@ -14,6 +14,7 @@ public enum Code {
 
     // 공통 오류
     BAD_REQUEST(HttpStatus.BAD_REQUEST.value(), "BAD_REQUEST", "잘못된 요청입니다."),
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR.value(), "INTERNAL_ERROR", "서버 오류가 발생했습니다."),
 
     // 인증/인가 오류
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "MEMBER_NOT_FOUND", "존재하지 않는 회원입니다."),

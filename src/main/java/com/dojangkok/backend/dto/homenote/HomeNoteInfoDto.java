@@ -13,6 +13,7 @@ public class HomeNoteInfoDto {
     @JsonProperty("home_note_id")
     private Long homeNoteId;
 
+    @JsonProperty("title")
     private String title;
 
     @JsonProperty("created_at")

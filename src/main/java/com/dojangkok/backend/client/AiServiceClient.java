@@ -2,7 +2,7 @@ package com.dojangkok.backend.client;
 
 import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.common.exception.GeneralException;
-import com.dojangkok.backend.dto.checklist.ChecklistGenerateRequestDto;
+import com.dojangkok.backend.dto.checklist.ChecklistTemplateGenerateContext;
 import com.dojangkok.backend.dto.easycontract.EasyContractGenerateRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,8 @@ public class AiServiceClient {
     @Value("${ai.service.url}")
     private String aiServiceUrl;
 
-    public void requestChecklistGeneration(ChecklistGenerateRequestDto request, Long templateId) {
+    public void requestChecklistGeneration(ChecklistTemplateGenerateContext checklistTemplateGenerateContext) {
+        Long templateId = checklistTemplateGenerateContext.templateId();
         log.info("Requesting checklist generation to AI service for templateId: {}", templateId);
 
         try {
@@ -32,7 +33,7 @@ public class AiServiceClient {
                     .uri(aiServiceUrl + "/api/checklists/{id}", templateId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
-                    .body(request)
+                    .body(checklistTemplateGenerateContext.checklistGenerateRequestDto())
                     .retrieve()
                     .toBodilessEntity();
 
