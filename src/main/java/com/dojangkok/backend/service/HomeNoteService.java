@@ -2,15 +2,14 @@ package com.dojangkok.backend.service;
 
 import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.common.exception.GeneralException;
+import com.dojangkok.backend.common.util.CursorPaginationUtil;
 import com.dojangkok.backend.common.util.FileAssetValidator;
 import com.dojangkok.backend.domain.FileAsset;
 import com.dojangkok.backend.domain.HomeNote;
 import com.dojangkok.backend.domain.HomeNoteFile;
 import com.dojangkok.backend.domain.Member;
-import com.dojangkok.backend.domain.enums.FileAssetStatus;
 import com.dojangkok.backend.dto.homenote.*;
 import com.dojangkok.backend.mapper.HomeNoteMapper;
-import com.dojangkok.backend.repository.FileAssetRepository;
 import com.dojangkok.backend.repository.HomeNoteFileRepository;
 import com.dojangkok.backend.repository.HomeNoteRepository;
 import com.dojangkok.backend.repository.MemberRepository;
@@ -26,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -57,7 +55,7 @@ public class HomeNoteService {
         homeNoteRepository.save(homeNote);
 
         // 체크리스트 초기화 및 응답 DTO 반환
-        var checklistResponseDto = checklistService.initializeChecklist(member, homeNote);
+        var checklistResponseDto = checklistService.createChecklist(member, homeNote);
 
         log.info("HomeNote created: id={}, memberId={}", homeNote.getId(), memberId);
 
@@ -86,7 +84,7 @@ public class HomeNoteService {
                 .toList();
 
         String nextCursor = hasNext && !homeNotes.isEmpty()
-                ? encodeCursor(homeNotes.get(homeNotes.size() - 1).getId())
+                ? encodeCursor(homeNotes.getLast().getId())
                 : null;
 
         return homeNoteMapper.toHomeNoteListResponseDto(items, DEFAULT_PAGE_SIZE, hasNext, nextCursor);
@@ -119,7 +117,7 @@ public class HomeNoteService {
                 .toList();
 
         String nextCursor = hasNext && !homeNoteFiles.isEmpty()
-                ? encodeCursor(homeNoteFiles.get(homeNoteFiles.size() - 1).getId())
+                ? encodeCursor(homeNoteFiles.getLast().getId())
                 : null;
 
         return homeNoteMapper.toHomeNoteDetailResponseDto(homeNoteInfo, items, DEFAULT_PAGE_SIZE, hasNext, nextCursor);
@@ -245,8 +243,7 @@ public class HomeNoteService {
     }
 
     private String encodeCursor(Long id) {
-        String cursorData = String.format("{\"offset\":%d}", id);
-        return Base64.getEncoder().encodeToString(cursorData.getBytes(StandardCharsets.UTF_8));
+        return CursorPaginationUtil.encodeCursor(id);
     }
 
     private Long decodeCursor(String cursor) {

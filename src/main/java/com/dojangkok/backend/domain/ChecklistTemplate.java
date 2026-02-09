@@ -38,10 +38,10 @@ public class ChecklistTemplate extends BaseCreatedTimeEntity {
         this.checklistStatus = checklistStatus;
     }
 
-    public static ChecklistTemplate createChecklistTemplate(LifestyleVersion lifestyleVersion, ChecklistStatus checklistStatus) {
+    public static ChecklistTemplate createChecklistTemplate(LifestyleVersion lifestyleVersion) {
         return ChecklistTemplate.builder()
                 .lifestyleVersion(lifestyleVersion)
-                .checklistStatus(checklistStatus)
+                .checklistStatus(ChecklistStatus.PROCESSING)
                 .build();
     }
 
