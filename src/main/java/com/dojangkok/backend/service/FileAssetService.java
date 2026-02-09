@@ -25,6 +25,8 @@ public class FileAssetService {
      */
     @Transactional
     public PresignedUrlItemResponseDto generatePresignedUrlForItem(PresignedUrlItemRequestDto item) {
+        long startTime = System.currentTimeMillis();
+        
         String fileKey = generateFileKey(item.getFileType().name(), item.getFileName());
 
         FileAsset fileAsset = FileAsset.createFileAsset(
@@ -34,9 +36,24 @@ public class FileAssetService {
                 item.getContentType(),
                 Map.of("sizeBytes", item.getSizeBytes())
         );
+        
+        // [TIMING] DB 저장
+        long dbSaveStart = System.currentTimeMillis();
         fileAssetRepository.save(fileAsset);
+        long dbSaveDuration = System.currentTimeMillis() - dbSaveStart;
 
+        // [TIMING] Presigned URL 생성
+        long presignedStart = System.currentTimeMillis();
         String presignedUrl = s3Service.generatePresignedUploadUrl(fileKey, item.getContentType());
+        long presignedDuration = System.currentTimeMillis() - presignedStart;
+        
+        long totalDuration = System.currentTimeMillis() - startTime;
+        
+        // 전체가 30ms 이상이면 상세 로그
+        if (totalDuration > 30) {
+            log.info("[TIMING] FileAsset 생성 상세 - 총: {}ms (DB저장: {}ms, presigned생성: {}ms) fileName={}",
+                    totalDuration, dbSaveDuration, presignedDuration, item.getFileName());
+        }
 
         log.info(
                 "Generated presigned URL for fileAssetId: {}, fileKey: {}, originalFileName: {}, sizeBytes: {}",
