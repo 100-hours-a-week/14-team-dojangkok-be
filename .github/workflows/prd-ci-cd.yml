@@ -9,13 +9,13 @@ permissions:
 # 워크플로우를 실행할 이벤트 결정 및 매핑
 on:
   push:
-    branches: [dev, main]
+    branches: [main]
     paths-ignore:
       - '.github/workflows/**'
       - '**.md'
       - 'docs/**'
   pull_request:
-    branches: [dev, main]
+    branches: [main]
     paths-ignore:
       - '.github/workflows/**'
       - '**.md'
