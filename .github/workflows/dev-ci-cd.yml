@@ -54,6 +54,7 @@ jobs:
   
   build-and-push-image: # 빌드 파일을 가지고 Container Image를 구성하는 단계
     needs: test-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       # 1. 소스코드 체크아웃
@@ -107,6 +108,7 @@ jobs:
 
   deploy: # Container Image를 가지고 배포를 수행하는 단계
     needs: build-and-push-image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       # 1. 소스코드를 체크아웃
