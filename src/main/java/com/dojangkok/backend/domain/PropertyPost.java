@@ -145,7 +145,6 @@ public class PropertyPost extends BaseTimeEntity {
 
         // search_text 정책: title + address_main + address_detail 결합
         String searchText = String.join(" ", title, addressMain);
-
         return PropertyPost.builder()
                 .member(member)
                 .easyContract(easyContract)
@@ -167,6 +166,20 @@ public class PropertyPost extends BaseTimeEntity {
                 .isVerified(isVerified)
                 .searchText(searchText)
                 .build();
+    }
+
+    public void update(String title, Long priceMain, Integer priceMonthly, String content,
+                       EasyContract easyContract, Boolean isVerified) {
+        if (title != null) this.title = title;
+        if (priceMain != null) this.priceMain = priceMain;
+        if (priceMonthly != null) this.priceMonthly = priceMonthly;
+        if (content != null) this.content = content;
+        if (easyContract != null) {
+            this.easyContract = easyContract;
+            this.isVerified = isVerified;
+        }
+        // searchText 갱신
+        this.searchText = String.join(" ", this.title, this.addressMain);
     }
 
     public void changeDealStatus(DealStatus dealStatus) {

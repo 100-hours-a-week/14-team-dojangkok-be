@@ -54,5 +54,9 @@ public class PropertyPostFile {
                 .fileAsset(fileAsset)
                 .build();
     }
+
+    public void markAsPrimary() {
+        this.isPrimary = true;
+    }
 }
 
