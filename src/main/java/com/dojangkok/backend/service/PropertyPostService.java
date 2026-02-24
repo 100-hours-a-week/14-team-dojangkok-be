@@ -40,15 +40,48 @@ public class PropertyPostService {
     private final FileAssetValidator fileAssetValidator;
     private final PresignedUrlUtil presignedUrlUtil;
 
-    // ==================== 매물 게시글 목록 조회 ====================
+    // ==================== 매물 게시글 검색/필터링 ====================
 
     @Transactional(readOnly = true)
-    public PropertyPostListResponseDto searchPropertyPosts(PropertyPostSearchRequestDto searchRequest) {
-        List<PropertyPost> posts = propertyPostRepository.search(searchRequest, DEFAULT_PAGE_SIZE);
-        return buildListResponse(posts);
+    public PropertyPostSearchResponseDto searchPropertyPosts(PropertyPostSearchRequestDto requestDto, String cursor) {
+        validateSearchRequest(requestDto);
+
+        List<PropertyPost> posts = propertyPostRepository.search(requestDto, cursor, DEFAULT_PAGE_SIZE);
+        long totalCount = propertyPostRepository.searchCount(requestDto);
+
+        boolean hasNext = posts.size() > DEFAULT_PAGE_SIZE;
+        if (hasNext) {
+            posts = posts.subList(0, DEFAULT_PAGE_SIZE);
+        }
+
+        String nextCursor = hasNext && !posts.isEmpty()
+                ? CursorPaginationUtil.encodeCursor(posts.getLast().getId())
+                : null;
+
+        List<PropertyPostListItemDto> items = posts.stream()
+                .map(post -> {
+                    PropertyPostThumbnailDto thumbnail = getThumbnail(post.getId());
+                    return propertyPostMapper.toPropertyPostListItemDto(post, thumbnail);
+                })
+                .toList();
+
+        return PropertyPostSearchResponseDto.builder()
+                .totalCount(totalCount)
+                .limit(DEFAULT_PAGE_SIZE)
+                .hasNext(hasNext)
+                .nextCursor(nextCursor)
+                .items(items)
+                .build();
     }
 
     @Transactional(readOnly = true)
+    public PropertyPostSearchCountResponseDto countPropertyPosts(PropertyPostSearchRequestDto requestDto) {
+        validateSearchRequest(requestDto);
+        long count = propertyPostRepository.searchCount(requestDto);
+        return PropertyPostSearchCountResponseDto.builder().count(count).build();
+    }
+
+    // ==================== 매물 게시글 목록 조회 ====================
     public PropertyPostListResponseDto getPropertyPostList(String cursor) {
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE + 1);
         List<PropertyPost> posts;
@@ -467,6 +500,14 @@ public class PropertyPostService {
     private void validateFloor(BigDecimal floor) {
         if (floor == null) {
             throw new GeneralException(Code.FLOOR_INVALID);
+        }
+    }
+
+    private void validateSearchRequest(PropertyPostSearchRequestDto dto) {
+        // 가격 범위 검증
+        if (dto.getPriceMainMin() != null && dto.getPriceMainMax() != null
+                && dto.getPriceMainMin() > dto.getPriceMainMax()) {
+            throw new GeneralException(Code.PRICE_RANGE_INVALID);
         }
     }
 

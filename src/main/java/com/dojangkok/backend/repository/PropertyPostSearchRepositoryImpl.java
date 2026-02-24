@@ -5,8 +5,10 @@ import com.dojangkok.backend.domain.PropertyPost;
 import com.dojangkok.backend.domain.QPropertyPost;
 import com.dojangkok.backend.domain.enums.DealStatus;
 import com.dojangkok.backend.domain.enums.PostStatus;
+import com.dojangkok.backend.domain.enums.PropertyPostSort;
 import com.dojangkok.backend.dto.propertypost.PropertyPostSearchRequestDto;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -19,73 +21,93 @@ public class PropertyPostSearchRepositoryImpl implements PropertyPostSearchRepos
 
     private final JPAQueryFactory queryFactory;
 
-    private static final QPropertyPost post = QPropertyPost.propertyPost;
+    private static final QPropertyPost pp = QPropertyPost.propertyPost;
 
     @Override
-    public List<PropertyPost> search(PropertyPostSearchRequestDto request, int pageSize) {
+    public List<PropertyPost> search(PropertyPostSearchRequestDto request, String cursor, int pageSize) {
+        BooleanBuilder builder = buildSearchCondition(request);
+
+        // 커서 조건
+        if (cursor != null && !cursor.isBlank()) {
+            Long cursorId = CursorPaginationUtil.decodeCursor(cursor);
+            builder.and(pp.id.lt(cursorId));
+        }
+
+        // 정렬
+        OrderSpecifier<?>[] orderSpecifiers = buildOrderSpecifiers(request.getSort());
+
+        return queryFactory
+                .selectFrom(pp)
+                .where(builder)
+                .orderBy(orderSpecifiers)
+                .limit(pageSize + 1)
+                .fetch();
+    }
+
+    @Override
+    public long searchCount(PropertyPostSearchRequestDto request) {
+        BooleanBuilder builder = buildSearchCondition(request);
+
+        Long count = queryFactory
+                .select(pp.count())
+                .from(pp)
+                .where(builder)
+                .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
+    // ==================== Private Helper ====================
+
+    private BooleanBuilder buildSearchCondition(PropertyPostSearchRequestDto request) {
         BooleanBuilder builder = new BooleanBuilder();
 
         // 기본 조건 (항상 적용)
-        builder.and(post.deletedAt.isNull());
-        builder.and(post.isHidden.isFalse());
-        builder.and(post.postStatus.eq(PostStatus.ACTIVE));
-        builder.and(post.dealStatus.eq(DealStatus.TRADING));
+        builder.and(pp.deletedAt.isNull());
+        builder.and(pp.isHidden.isFalse());
+        builder.and(pp.postStatus.eq(PostStatus.ACTIVE));
+        builder.and(pp.dealStatus.eq(DealStatus.TRADING));
 
-        // 키워드 검색
+        // 키워드 검색 (searchText = title + addressMain)
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            builder.and(post.searchText.containsIgnoreCase(request.getKeyword()));
+            builder.and(pp.searchText.containsIgnoreCase(request.getKeyword()));
         }
 
         // 매물 유형 (다중 선택)
-        if (request.getPropertyTypes() != null && !request.getPropertyTypes().isEmpty()) {
-            builder.and(post.propertyType.in(request.getPropertyTypes()));
+        if (request.getPropertyType() != null && !request.getPropertyType().isEmpty()) {
+            builder.and(pp.propertyType.in(request.getPropertyType()));
         }
 
         // 거래 유형 (다중 선택)
-        if (request.getRentTypes() != null && !request.getRentTypes().isEmpty()) {
-            builder.and(post.rentType.in(request.getRentTypes()));
+        if (request.getRentType() != null && !request.getRentType().isEmpty()) {
+            builder.and(pp.rentType.in(request.getRentType()));
         }
 
         // 보증금/매매가 범위
         if (request.getPriceMainMin() != null) {
-            builder.and(post.priceMain.goe(request.getPriceMainMin()));
+            builder.and(pp.priceMain.goe(request.getPriceMainMin()));
         }
         if (request.getPriceMainMax() != null) {
-            builder.and(post.priceMain.loe(request.getPriceMainMax()));
+            builder.and(pp.priceMain.loe(request.getPriceMainMax()));
         }
 
-        // 월세 범위
-        if (request.getPriceMonthlyMin() != null) {
-            builder.and(post.priceMonthly.goe(request.getPriceMonthlyMin()));
-        }
+        // 월세 상한
         if (request.getPriceMonthlyMax() != null) {
-            builder.and(post.priceMonthly.loe(request.getPriceMonthlyMax()));
+            builder.and(pp.priceMonthly.loe(request.getPriceMonthlyMax()));
         }
 
-        // 면적 범위
-        if (request.getAreaMin() != null) {
-            builder.and(post.exclusiveAreaM2.goe(request.getAreaMin()));
-        }
-        if (request.getAreaMax() != null) {
-            builder.and(post.exclusiveAreaM2.loe(request.getAreaMax()));
+        return builder;
+    }
+
+    private OrderSpecifier<?>[] buildOrderSpecifiers(PropertyPostSort sort) {
+        if (sort == null) {
+            sort = PropertyPostSort.LATEST;
         }
 
-        // 인증 매물 여부
-        if (request.getIsVerified() != null) {
-            builder.and(post.isVerified.eq(request.getIsVerified()));
-        }
-
-        // 커서 페이지네이션
-        if (request.getCursor() != null && !request.getCursor().isBlank()) {
-            Long cursorId = CursorPaginationUtil.decodeCursor(request.getCursor());
-            builder.and(post.id.lt(cursorId));
-        }
-
-        return queryFactory
-                .selectFrom(post)
-                .where(builder)
-                .orderBy(post.createdAt.desc(), post.id.desc())
-                .limit(pageSize + 1)
-                .fetch();
+        return switch (sort) {
+            case PRICE_ASC -> new OrderSpecifier[]{pp.priceMain.asc(), pp.id.desc()};
+            case PRICE_DESC -> new OrderSpecifier[]{pp.priceMain.desc(), pp.id.desc()};
+            default -> new OrderSpecifier[]{pp.createdAt.desc(), pp.id.desc()};
+        };
     }
 }

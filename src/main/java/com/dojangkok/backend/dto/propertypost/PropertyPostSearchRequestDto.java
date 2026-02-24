@@ -1,36 +1,35 @@
 package com.dojangkok.backend.dto.propertypost;
 
+import com.dojangkok.backend.domain.enums.PropertyPostSort;
 import com.dojangkok.backend.domain.enums.PropertyType;
 import com.dojangkok.backend.domain.enums.RentType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
-@Setter
+@NoArgsConstructor
 public class PropertyPostSearchRequestDto {
 
     private String keyword;
 
-    private List<PropertyType> propertyTypes;
+    @JsonProperty("property_type")
+    private List<PropertyType> propertyType;
 
-    private List<RentType> rentTypes;
+    @JsonProperty("rent_type")
+    private List<RentType> rentType;
 
+    @JsonProperty("price_main_min")
     private Long priceMainMin;
 
+    @JsonProperty("price_main_max")
     private Long priceMainMax;
 
-    private Integer priceMonthlyMin;
-
+    @JsonProperty("price_monthly_max")
     private Integer priceMonthlyMax;
 
-    private BigDecimal areaMin;
-
-    private BigDecimal areaMax;
-
-    private Boolean isVerified;
-
-    private String cursor;
+    private PropertyPostSort sort;
 }

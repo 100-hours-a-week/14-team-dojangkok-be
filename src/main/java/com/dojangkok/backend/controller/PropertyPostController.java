@@ -20,11 +20,21 @@ public class PropertyPostController {
     private final PropertyPostService propertyPostService;
     private final PropertyPostFileUploadService propertyPostFileUploadService;
 
-    // 매물 게시글 검색/필터링
-    @GetMapping("/search")
-    public DataResponseDto<PropertyPostListResponseDto> searchPropertyPosts(@ModelAttribute PropertyPostSearchRequestDto searchRequest) {
-        PropertyPostListResponseDto responseDto = propertyPostService.searchPropertyPosts(searchRequest);
+    // 매물 게시글 검색/필터링 - 목록
+    @PostMapping("/searches")
+    public DataResponseDto<PropertyPostSearchResponseDto> searchPropertyPosts(
+            @RequestParam(required = false) String cursor,
+            @Valid @RequestBody PropertyPostSearchRequestDto requestDto) {
+        PropertyPostSearchResponseDto responseDto = propertyPostService.searchPropertyPosts(requestDto, cursor);
         return new DataResponseDto<>(Code.SUCCESS, "매물 검색에 성공하였습니다.", responseDto);
+    }
+
+    // 매물 게시글 검색/필터링 - 개수만
+    @PostMapping("/searches/count")
+    public DataResponseDto<PropertyPostSearchCountResponseDto> countPropertyPosts(
+            @Valid @RequestBody PropertyPostSearchRequestDto requestDto) {
+        PropertyPostSearchCountResponseDto responseDto = propertyPostService.countPropertyPosts(requestDto);
+        return new DataResponseDto<>(Code.SUCCESS, "매물 개수 조회에 성공하였습니다.", responseDto);
     }
 
     // 매물 게시글 목록 조회

@@ -7,5 +7,7 @@ import java.util.List;
 
 public interface PropertyPostSearchRepository {
 
-    List<PropertyPost> search(PropertyPostSearchRequestDto searchRequest, int pageSize);
+    List<PropertyPost> search(PropertyPostSearchRequestDto request, String cursor, int pageSize);
+
+    long searchCount(PropertyPostSearchRequestDto request);
 }

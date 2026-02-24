@@ -99,7 +99,6 @@ public class PropertyPost extends BaseTimeEntity {
     @Column(name = "is_verified")
     private Boolean isVerified;
 
-    @Lob
     @Column(name = "search_text", nullable = false, columnDefinition = "TEXT")
     private String searchText;
 

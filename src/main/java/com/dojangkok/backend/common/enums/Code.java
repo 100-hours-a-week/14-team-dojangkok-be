@@ -78,6 +78,9 @@ public enum Code {
     POST_VISIBILITY_INVALID(HttpStatus.BAD_REQUEST.value(), "POST_VISIBILITY_INVALID", "is_hidden 값이 올바르지 않습니다."),
     BOOKMARK_ALREADY_EXISTS(HttpStatus.CONFLICT.value(), "BOOKMARK_ALREADY_EXISTS", "이미 스크랩된 매물입니다."),
     BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "BOOKMARK_NOT_FOUND", "스크랩된 매물이 아닙니다."),
+    SORT_INVALID(HttpStatus.BAD_REQUEST.value(), "SORT_INVALID", "정렬 조건이 올바르지 않습니다."),
+    PRICE_RANGE_INVALID(HttpStatus.BAD_REQUEST.value(), "PRICE_RANGE_INVALID", "가격 범위가 올바르지 않습니다."),
+    FILTER_INVALID(HttpStatus.BAD_REQUEST.value(), "FILTER_INVALID", "필터 값이 올바르지 않습니다."),
 
     // AI 서비스 관련 오류
     AI_SERVICE_ERROR(HttpStatus.BAD_GATEWAY.value(), "AI_SERVICE_ERROR", "AI 서비스에서 오류가 발생하였습니다."),
