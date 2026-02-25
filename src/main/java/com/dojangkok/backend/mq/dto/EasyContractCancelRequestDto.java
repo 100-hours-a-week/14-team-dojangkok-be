@@ -7,13 +7,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class EasyContractMqResponseDto extends AiResponseDto {
+public class EasyContractCancelRequestDto {
 
     @JsonProperty("easy_contract_id")
     private Long easyContractId;
-
-    private String content;
 }

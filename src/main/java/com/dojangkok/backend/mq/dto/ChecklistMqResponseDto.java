@@ -1,5 +1,6 @@
 package com.dojangkok.backend.mq.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,6 +14,8 @@ import java.util.List;
 @Builder
 public class ChecklistMqResponseDto extends AiResponseDto {
 
+    @JsonProperty("template_id")
     private Long templateId;
+
     private List<String> checklists;
 }
