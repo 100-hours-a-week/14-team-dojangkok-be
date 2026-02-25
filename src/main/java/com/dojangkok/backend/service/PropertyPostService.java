@@ -504,9 +504,14 @@ public class PropertyPostService {
     }
 
     private void validateSearchRequest(PropertyPostSearchRequestDto dto) {
-        // 가격 범위 검증
+        // 보증금/매매가 범위 검증
         if (dto.getPriceMainMin() != null && dto.getPriceMainMax() != null
                 && dto.getPriceMainMin() > dto.getPriceMainMax()) {
+            throw new GeneralException(Code.PRICE_RANGE_INVALID);
+        }
+        // 월세 범위 검증
+        if (dto.getPriceMonthlyMin() != null && dto.getPriceMonthlyMax() != null
+                && dto.getPriceMonthlyMin() > dto.getPriceMonthlyMax()) {
             throw new GeneralException(Code.PRICE_RANGE_INVALID);
         }
     }

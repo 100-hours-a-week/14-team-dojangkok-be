@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -27,6 +26,9 @@ public class PropertyPostSearchRequestDto {
 
     @JsonProperty("price_main_max")
     private Long priceMainMax;
+
+    @JsonProperty("price_monthly_min")
+    private Integer priceMonthlyMin;
 
     @JsonProperty("price_monthly_max")
     private Integer priceMonthlyMax;
