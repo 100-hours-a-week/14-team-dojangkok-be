@@ -10,12 +10,11 @@ import java.util.List;
 @Component
 public class EasyContractMapper {
 
-    public EasyContractCreateResponseDto toEasyContractCreateResponseDto(EasyContract easyContract) {
+    public EasyContractCreateResponseDto toEasyContractCreateResponseDto(EasyContract easyContract, String correlationId) {
         return EasyContractCreateResponseDto.builder()
                 .easyContractId(easyContract.getId())
+                .correlationId(correlationId)
                 .status(easyContract.getStatus())
-                .title(easyContract.getTitle())
-                .content(easyContract.getContent())
                 .createdAt(easyContract.getCreatedAt())
                 .build();
     }

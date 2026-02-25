@@ -11,8 +11,8 @@ import java.util.List;
 @Component
 public class LifestyleMapper {
 
-    public LifestyleResponseDto toLifestyleResponseDto(Member member, List<LifestyleItem> lifestyleItems) {
-        List<LifestyleDto> lifestyleDtoList = lifestyleItems.stream()
+    public LifestyleResponseDto toLifestyleResponseDto(Member member, List<LifestyleItem> lifestyleItemList) {
+        List<LifestyleDto> lifestyleDtoList = lifestyleItemList.stream()
                 .map(this::toLifestyleDto)
                 .toList();
 

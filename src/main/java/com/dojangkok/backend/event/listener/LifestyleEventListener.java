@@ -1,7 +1,7 @@
 package com.dojangkok.backend.event.listener;
 
 import com.dojangkok.backend.event.LifestyleCreatedEvent;
-import com.dojangkok.backend.facade.ChecklistTemplateFacade;
+import com.dojangkok.backend.service.ChecklistTemplateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -14,7 +14,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class LifestyleEventListener {
 
-    private final ChecklistTemplateFacade checklistTemplateFacade;
+    private final ChecklistTemplateService checklistTemplateService;
 
     /**
      * 라이프스타일 생성 이벤트를 수신하여 체크리스트 템플릿 생성을 시작
@@ -26,13 +26,14 @@ public class LifestyleEventListener {
         log.info("Received LifestyleCreatedEvent for lifestyleVersionId: {}", event.lifestyleVersionId());
 
         try {
-            checklistTemplateFacade.initiateChecklistGeneration(
+            checklistTemplateService.requestChecklistGeneration(
+                    event.memberId(),
                     event.lifestyleVersionId(),
                     event.lifestyleItems()
             );
         } catch (Exception e) {
-            log.error("Failed to handle LifestyleCreatedEvent for lifestyleVersionId: {}", event.lifestyleVersionId(), e);
-            // TODO : 여기서 재시도 로직 추가
+            log.error("Failed to handle LifestyleCreatedEvent for lifestyleVersionId: {}",
+                    event.lifestyleVersionId(), e);
         }
     }
 }

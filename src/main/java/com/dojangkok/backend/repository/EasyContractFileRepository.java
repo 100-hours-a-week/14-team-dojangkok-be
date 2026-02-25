@@ -26,6 +26,4 @@ public interface EasyContractFileRepository extends JpaRepository<EasyContractFi
 
     @Query("SELECT MAX(ecf.sortOrder) FROM EasyContractFile ecf WHERE ecf.easyContract.id = :easyContractId")
     Optional<Integer> findMaxSortOrderByEasyContractId(@Param("easyContractId") Long easyContractId);
-
-    Optional<EasyContractFile> findByFileAssetIdAndEasyContractId(Long id, Long easyContractId);
 }
