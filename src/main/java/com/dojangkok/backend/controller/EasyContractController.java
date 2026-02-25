@@ -72,7 +72,7 @@ public class EasyContractController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{easyContractId}/cancel")
+    @PostMapping("/{easyContractId}/cancellation")
     public ResponseDto cancelEasyContract(@CurrentMemberId Long memberId, @PathVariable Long easyContractId) {
         easyContractService.cancelEasyContract(memberId, easyContractId);
         return new ResponseDto(Code.SUCCESS, "쉬운 계약서 생성이 취소되었습니다.");

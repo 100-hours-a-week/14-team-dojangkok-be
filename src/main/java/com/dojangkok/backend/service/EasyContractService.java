@@ -15,6 +15,7 @@ import com.dojangkok.backend.dto.easycontract.EasyContractFileDto;
 import com.dojangkok.backend.dto.easycontract.*;
 import com.dojangkok.backend.mapper.EasyContractMapper;
 import com.dojangkok.backend.mq.EasyContractMqProducer;
+import com.dojangkok.backend.mq.dto.EasyContractCancelRequestDto;
 import com.dojangkok.backend.mq.dto.EasyContractMqRequestDto;
 import com.dojangkok.backend.mq.dto.EasyContractMqResponseDto;
 import com.dojangkok.backend.repository.EasyContractFileRepository;
@@ -55,43 +56,43 @@ public class EasyContractService {
         EasyContract easyContract = EasyContract.createEasyContract(member);
         easyContractRepository.saveAndFlush(easyContract);
 
-        List<Long> fileAssetIds = requestDto.getFileAssetIds();
-
-        // 파일 첨부 정보 저장
-        attachFilesToEasyContract(easyContract, fileAssetIds);
-
-        // 파일 검증 및 조회
-        Map<Long, FileAsset> fileAssetMap = fileAssetValidator.validateAndGetFileAssets(fileAssetIds);
-
-        // AI 요청용 DTO 생성
-        List<EasyContractFileDto> fileDtoList = fileAssetIds.stream()
-                .map(fileAssetId -> {
-                    FileAsset fileAsset = fileAssetMap.get(fileAssetId);
-                    String presignedUrl = s3Service.generatePresignedDownloadUrl(fileAsset.getFileKey());
-                    String fileName = extractFileName(fileAsset.getFileKey());
-                    return EasyContractFileDto.builder()
-                            .url(presignedUrl)
-                            .fileName(fileName)
-                            .fileType(fileAsset.getFileType())
-                            .build();
-                })
+        // 전체 fileAssetIds 추출 (모든 doc_type 합침)
+        List<Long> allFileAssetIds = requestDto.getFiles().stream()
+                .flatMap(group -> group.getFileAssetIds().stream())
                 .toList();
 
-        EasyContractGenerateRequestDto generateRequestDto = EasyContractGenerateRequestDto.builder()
-                .files(fileDtoList)
-                .build();
+        // 파일 첨부 정보 저장
+        attachFilesToEasyContract(easyContract, allFileAssetIds);
+
+        // 파일 검증 및 조회
+        Map<Long, FileAsset> fileAssetMap = fileAssetValidator.validateAndGetFileAssets(allFileAssetIds);
+
+        // AI 요청용 DTO 생성 (doc_type별로 파일 매핑)
+        List<EasyContractFileDto> fileDtoList = requestDto.getFiles().stream()
+                .flatMap(group -> group.getFileAssetIds().stream()
+                        .map(fileAssetId -> {
+                            FileAsset fileAsset = fileAssetMap.get(fileAssetId);
+                            String presignedUrl = s3Service.generatePresignedDownloadUrl(fileAsset.getFileKey());
+                            String fileName = extractFileName(fileAsset.getFileKey());
+                            return EasyContractFileDto.builder()
+                                    .docType(group.getDocType())
+                                    .url(presignedUrl)
+                                    .fileName(fileName)
+                                    .build();
+                        }))
+                .toList();
 
         String correlationId = CorrelationIdGenerator.generate();
         EasyContractMqRequestDto request = EasyContractMqRequestDto.builder()
                 .easyContractId(easyContract.getId())
                 .correlationId(correlationId)
-                .easyContractGenerateRequestDto(generateRequestDto)
+                .files(fileDtoList)
                 .build();
 
         easyContractMqProducer.sendRequest(request);
 
         log.info("EasyContract creation requested: id={}, correlationId={}",
-                easyContract.getId(), request);
+                easyContract.getId(), correlationId);
 
         return easyContractMapper.toEasyContractCreateResponseDto(easyContract, correlationId);
     }
@@ -126,6 +127,12 @@ public class EasyContractService {
 
         easyContract.markCancelled();
         easyContractRepository.save(easyContract);
+
+        easyContractMqProducer.sendCancel(
+                EasyContractCancelRequestDto.builder()
+                        .easyContractId(easyContractId)
+                        .build()
+        );
 
         log.info("EasyContract cancelled: id={}, memberId={}", easyContractId, memberId);
     }
