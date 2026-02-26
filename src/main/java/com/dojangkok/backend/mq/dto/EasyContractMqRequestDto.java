@@ -18,6 +18,9 @@ public class EasyContractMqRequestDto {
     @JsonProperty("correlation_id")
     private String correlationId;
 
+    @JsonProperty("member_id")
+    private Long memberId;
+
     @JsonProperty("easy_contract_id")
     private Long easyContractId;
 
