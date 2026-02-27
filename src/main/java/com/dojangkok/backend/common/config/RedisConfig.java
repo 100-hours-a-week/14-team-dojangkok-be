@@ -10,9 +10,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 @Slf4j
 @Configuration
@@ -22,10 +25,29 @@ public class RedisConfig {
     @Bean
     @RefreshScope
     public RedisConnectionFactory redisConnectionFactory(RedisProperties redisProperties) {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName(redisProperties.getHost());
-        config.setPort(redisProperties.getPort());
-        return new LettuceConnectionFactory(config);
+        RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration();
+        serverConfig.setHostName(redisProperties.getHost());
+        serverConfig.setPort(redisProperties.getPort());
+        if (redisProperties.getPassword() != null && !redisProperties.getPassword().isEmpty()) {
+            serverConfig.setPassword(redisProperties.getPassword());
+        }
+        serverConfig.setDatabase(redisProperties.getDatabase());
+
+        // Lettuce pool 설정 반영
+        GenericObjectPoolConfig<?> poolConfig = new GenericObjectPoolConfig<>();
+        RedisProperties.Pool pool = redisProperties.getLettuce().getPool();
+        if (pool != null) {
+            poolConfig.setMaxTotal(pool.getMaxActive());
+            poolConfig.setMaxIdle(pool.getMaxIdle());
+            poolConfig.setMinIdle(pool.getMinIdle());
+        }
+
+        LettuceClientConfiguration clientConfig = LettucePoolingClientConfiguration.builder()
+                .poolConfig(poolConfig)
+                .commandTimeout(redisProperties.getTimeout() != null ? redisProperties.getTimeout() : java.time.Duration.ofSeconds(3))
+                .build();
+
+        return new LettuceConnectionFactory(serverConfig, clientConfig);
     }
 
     @Bean
@@ -41,10 +63,6 @@ public class RedisConfig {
                 .build();
     }
 
-    /**
-     * RefreshScope 빈은 lazy proxy이므로, 앱 시작 직후 강제로 커넥션을 초기화하여
-     * 배포 시 첫 요청에서 503이 발생하는 것을 방지
-     */
     @EventListener(ApplicationReadyEvent.class)
     public void warmUpRedis(ApplicationReadyEvent event) {
         try {
