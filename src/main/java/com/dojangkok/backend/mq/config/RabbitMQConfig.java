@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -146,13 +146,13 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public JacksonJsonMessageConverter messageConverter() {
-        return new JacksonJsonMessageConverter();
+    public Jackson2JsonMessageConverter messageConverter() {
+        return new Jackson2JsonMessageConverter();
     }
 
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory,
-                                         JacksonJsonMessageConverter messageConverter) {
+                                         Jackson2JsonMessageConverter messageConverter) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter);
         template.setMandatory(true);
@@ -164,11 +164,9 @@ public class RabbitMQConfig {
             }
         });
 
-        template.setReturnsCallback(returned -> {
-            log.error("Mandatory return: exchange={}, routingKey={}, replyCode={}, replyText={}",
-                    returned.getExchange(), returned.getRoutingKey(),
-                    returned.getReplyCode(), returned.getReplyText());
-        });
+        template.setReturnsCallback(returned -> log.error("Mandatory return: exchange={}, routingKey={}, replyCode={}, replyText={}",
+                returned.getExchange(), returned.getRoutingKey(),
+                returned.getReplyCode(), returned.getReplyText()));
 
         return template;
     }

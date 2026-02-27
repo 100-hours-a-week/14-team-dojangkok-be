@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -32,7 +32,7 @@ public class RedisExchangeCodeStore {
             String json = jsonMapper.writeValueAsString(data);
             redisTemplate.opsForValue().set(key, json, TTL);
             log.info("Redis에 교환 코드 저장 완료 - key: {}, ttl: {}초", key, TTL.getSeconds());
-        } catch (JacksonException e) {
+        } catch (JsonProcessingException e) {
             log.error("Failed to serialize exchange data", e);
             throw new IllegalStateException("Failed to save exchange code", e);
         }
@@ -49,7 +49,7 @@ public class RedisExchangeCodeStore {
         try {
             ExchangeData data = jsonMapper.readValue(json, ExchangeData.class);
             return Optional.of(data);
-        } catch (JacksonException e) {
+        } catch (JsonProcessingException e) {
             log.error("Failed to deserialize exchange data", e);
             return Optional.empty();
         }
