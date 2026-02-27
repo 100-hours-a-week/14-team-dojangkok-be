@@ -233,4 +233,14 @@ public class EasyContractFileUploadService {
                 .fileItems(successItems)
                 .build();
     }
+
+    @Transactional
+    public void deleteFileAsset(Long fileAssetId) {
+        FileAsset fileAsset = fileAssetRepository.findById(fileAssetId)
+                .orElseThrow(() -> new GeneralException(Code.FILE_NOT_FOUND));
+
+        fileAsset.softDelete();
+
+        log.info("FileAsset soft deleted: fileAssetId={}", fileAssetId);
+    }
 }
