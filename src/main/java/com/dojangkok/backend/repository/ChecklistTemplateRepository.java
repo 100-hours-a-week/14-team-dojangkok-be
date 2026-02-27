@@ -20,12 +20,4 @@ public interface ChecklistTemplateRepository extends JpaRepository<ChecklistTemp
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ChecklistTemplate ct WHERE ct.lifestyleVersion.id IN :versionIds")
     void deleteAllByLifestyleVersionIdIn(@Param("versionIds") List<Long> versionIds);
-
-    @Query("SELECT ct FROM ChecklistTemplate ct " +
-            "JOIN ct.lifestyleVersion lv " +
-            "JOIN lv.lifestyle l " +
-            "WHERE l.member.id = :memberId " +
-            "ORDER BY ct.createdAt DESC " +
-            "LIMIT 1")
-    Optional<ChecklistTemplate> findTopByLifestyleVersionMemberIdOrderByCreatedAtDesc(@Param("memberId") Long memberId);
 }

@@ -2,6 +2,7 @@ package com.dojangkok.backend.controller;
 
 import com.dojangkok.backend.auth.jwt.CurrentMemberId;
 import com.dojangkok.backend.common.dto.DataResponseDto;
+import com.dojangkok.backend.common.dto.ResponseDto;
 import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.dto.easycontract.*;
 import com.dojangkok.backend.dto.fileasset.FileUploadCompleteRequestDto;
@@ -24,7 +25,7 @@ public class EasyContractController {
     public DataResponseDto<EasyContractCreateResponseDto> createEasyContract(@CurrentMemberId Long memberId,
                                                                              @Valid @RequestBody EasyContractFileRequestDto requestDto) {
         EasyContractCreateResponseDto responseDto = easyContractService.createEasyContract(memberId, requestDto);
-        return new DataResponseDto<>(Code.CREATED_SUCCESS, "쉬운 계약서 생성 요청에 성공하였습니다.", responseDto);
+        return new DataResponseDto<>(Code.ACCEPTED_SUCCESS, "쉬운 계약서 생성 요청에 성공하였습니다.", responseDto);
     }
 
     @GetMapping
@@ -69,5 +70,11 @@ public class EasyContractController {
     public ResponseEntity<Void> deleteEasyContract(@CurrentMemberId Long memberId, @PathVariable Long easyContractId) {
         easyContractService.deleteEasyContract(memberId, easyContractId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{easyContractId}/cancellation")
+    public ResponseDto cancelEasyContract(@CurrentMemberId Long memberId, @PathVariable Long easyContractId) {
+        easyContractService.cancelEasyContract(memberId, easyContractId);
+        return new ResponseDto(Code.SUCCESS, "쉬운 계약서 생성이 취소되었습니다.");
     }
 }

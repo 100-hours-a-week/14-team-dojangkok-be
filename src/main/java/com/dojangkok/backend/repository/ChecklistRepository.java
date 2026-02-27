@@ -15,6 +15,4 @@ public interface ChecklistRepository extends JpaRepository<Checklist, Long> {
     void deleteAllByMemberId(Long memberId);
 
     Optional<Checklist> findByHomeNoteId(Long homeNoteId);
-
-    boolean existsByHomeNoteId(Long homeNoteId);
 }

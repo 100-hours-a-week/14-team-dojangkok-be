@@ -30,6 +30,9 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
 
+    /**
+     * 임시 코드 교환 메서드
+     */
     @Transactional
     public TokenExchangeResponseDto exchangeToken(String code) {
         ExchangeData data = exchangeCodeStore.consume(code)
