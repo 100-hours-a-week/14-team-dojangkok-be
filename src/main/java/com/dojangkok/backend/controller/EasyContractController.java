@@ -68,7 +68,7 @@ public class EasyContractController {
 
     @DeleteMapping("/files/{fileAssetId}")
     public ResponseEntity<Void> deleteFileAsset(@PathVariable Long fileAssetId) {
-        easyContractFileUploadService.deleteFileAsset(fileAssetId);
+        easyContractService.deleteFileAsset(fileAssetId);
         return ResponseEntity.noContent().build();
     }
 

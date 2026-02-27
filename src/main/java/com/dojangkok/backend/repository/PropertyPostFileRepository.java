@@ -38,4 +38,11 @@ public interface PropertyPostFileRepository extends JpaRepository<PropertyPostFi
             @Param("excludeId") Long excludeId);
 
     long countByPropertyPostId(@Param("propertyPostId") Long propertyPostId);
+
+    @Query("SELECT ppf FROM PropertyPostFile ppf " +
+            "JOIN FETCH ppf.fileAsset " +
+            "JOIN FETCH ppf.propertyPost p " +
+            "JOIN FETCH p.member " +
+            "WHERE ppf.fileAsset.id = :fileAssetId")
+    Optional<PropertyPostFile> findByFileAssetId(@Param("fileAssetId") Long fileAssetId);
 }

@@ -20,6 +20,7 @@ import com.dojangkok.backend.mq.dto.EasyContractMqRequestDto;
 import com.dojangkok.backend.mq.dto.EasyContractMqResponseDto;
 import com.dojangkok.backend.repository.EasyContractFileRepository;
 import com.dojangkok.backend.repository.EasyContractRepository;
+import com.dojangkok.backend.repository.FileAssetRepository;
 import com.dojangkok.backend.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,7 @@ public class EasyContractService {
     private final S3Service s3Service;
     private final EasyContractMapper easyContractMapper;
     private final EasyContractMqProducer easyContractMqProducer;
+    private final FileAssetRepository fileAssetRepository;
 
     @Transactional
     public EasyContractCreateResponseDto createEasyContract(Long memberId, EasyContractFileRequestDto requestDto) {
@@ -201,11 +203,7 @@ public class EasyContractService {
     @Transactional
     public void deleteEasyContract(Long memberId, Long easyContractId) {
         EasyContract easyContract = getEasyContractWithAccessCheck(memberId, easyContractId);
-
-        // 연결된 EasyContractFile hard delete
         easyContractFileRepository.deleteAllByEasyContractId(easyContractId);
-
-        // EasyContract soft delete
         easyContract.softDelete();
 
         log.info("EasyContract deleted: id={}, memberId={}", easyContractId, memberId);
@@ -267,5 +265,15 @@ public class EasyContractService {
         }
         int lastSlashIndex = fileKey.lastIndexOf('/');
         return lastSlashIndex >= 0 ? fileKey.substring(lastSlashIndex + 1) : fileKey;
+    }
+
+    @Transactional
+    public void deleteFileAsset(Long fileAssetId) {
+        FileAsset fileAsset = fileAssetRepository.findById(fileAssetId)
+                .orElseThrow(() -> new GeneralException(Code.FILE_NOT_FOUND));
+
+        fileAsset.softDelete();
+
+        log.info("FileAsset soft deleted: fileAssetId={}", fileAssetId);
     }
 }
