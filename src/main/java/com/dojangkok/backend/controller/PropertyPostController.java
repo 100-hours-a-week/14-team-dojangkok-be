@@ -22,32 +22,32 @@ public class PropertyPostController {
 
     // 매물 게시글 검색/필터링 - 목록
     @PostMapping("/searches")
-    public DataResponseDto<PropertyPostSearchResponseDto> searchPropertyPosts(
-            @RequestParam(required = false) String cursor,
-            @Valid @RequestBody PropertyPostSearchRequestDto requestDto) {
-        PropertyPostSearchResponseDto responseDto = propertyPostService.searchPropertyPosts(requestDto, cursor);
+    public DataResponseDto<PropertyPostSearchResponseDto> searchPropertyPosts(@CurrentMemberId Long memberId, @RequestParam(required = false) String cursor,
+                                                                              @Valid @RequestBody PropertyPostSearchRequestDto requestDto) {
+        PropertyPostSearchResponseDto responseDto = propertyPostService.searchPropertyPosts(memberId, requestDto, cursor);
         return new DataResponseDto<>(Code.SUCCESS, "매물 검색에 성공하였습니다.", responseDto);
     }
 
     // 매물 게시글 검색/필터링 - 개수만
     @PostMapping("/searches/count")
-    public DataResponseDto<PropertyPostSearchCountResponseDto> countPropertyPosts(
-            @Valid @RequestBody PropertyPostSearchRequestDto requestDto) {
+    public DataResponseDto<PropertyPostSearchCountResponseDto> countPropertyPosts(@Valid @RequestBody PropertyPostSearchRequestDto requestDto) {
         PropertyPostSearchCountResponseDto responseDto = propertyPostService.countPropertyPosts(requestDto);
         return new DataResponseDto<>(Code.SUCCESS, "매물 개수 조회에 성공하였습니다.", responseDto);
     }
 
     // 매물 게시글 목록 조회
     @GetMapping
-    public DataResponseDto<PropertyPostListResponseDto> getPropertyPostList(@RequestParam(required = false) String cursor) {
-        PropertyPostListResponseDto responseDto = propertyPostService.getPropertyPostList(cursor);
+    public DataResponseDto<PropertyPostListResponseDto> getPropertyPostList(@CurrentMemberId Long memberId,
+                                                                            @RequestParam(required = false) String cursor) {
+        PropertyPostListResponseDto responseDto = propertyPostService.getPropertyPostList(memberId, cursor);
         return new DataResponseDto<>(Code.SUCCESS, "매물 목록 조회에 성공하였습니다.", responseDto);
     }
 
     // 매물 게시글 상세 조회
     @GetMapping("/{propertyPostId}")
-    public DataResponseDto<PropertyPostResponseDto> getPropertyPostDetail(@PathVariable Long propertyPostId) {
-        PropertyPostResponseDto responseDto = propertyPostService.getPropertyPostDetail(propertyPostId);
+    public DataResponseDto<PropertyPostResponseDto> getPropertyPostDetail(@CurrentMemberId Long memberId,
+                                                                          @PathVariable Long propertyPostId) {
+        PropertyPostResponseDto responseDto = propertyPostService.getPropertyPostDetail(memberId, propertyPostId);
         return new DataResponseDto<>(Code.SUCCESS, "매물 상세 조회에 성공하였습니다.", responseDto);
     }
 
@@ -69,23 +69,25 @@ public class PropertyPostController {
 
     // 거래 완료 게시글 목록 조회
     @GetMapping("/completed")
-    public DataResponseDto<PropertyPostListResponseDto> getCompletedPostList(@RequestParam(required = false) String cursor) {
-        PropertyPostListResponseDto responseDto = propertyPostService.getCompletedPostList(cursor);
+    public DataResponseDto<PropertyPostListResponseDto> getCompletedPostList(@CurrentMemberId Long memberId,
+                                                                             @RequestParam(required = false) String cursor) {
+        PropertyPostListResponseDto responseDto = propertyPostService.getCompletedPostList(memberId, cursor);
         return new DataResponseDto<>(Code.SUCCESS, "거래 완료 매물 목록 조회에 성공하였습니다.", responseDto);
     }
 
     // 거래 중 게시글 목록 조회
     @GetMapping("/trading")
-    public DataResponseDto<PropertyPostListResponseDto> getTradingPostList(@RequestParam(required = false) String cursor) {
-        PropertyPostListResponseDto responseDto = propertyPostService.getTradingPostList(cursor);
+    public DataResponseDto<PropertyPostListResponseDto> getTradingPostList(@CurrentMemberId Long memberId,
+                                                                           @RequestParam(required = false) String cursor) {
+        PropertyPostListResponseDto responseDto = propertyPostService.getTradingPostList(memberId, cursor);
         return new DataResponseDto<>(Code.SUCCESS, "거래 중 매물 목록 조회에 성공하였습니다.", responseDto);
     }
 
     // 매물 게시글 등록
     @PostMapping
-    public DataResponseDto<PropertyPostResponseDto> createPropertyPost(@CurrentMemberId Long memberId,
-                                                                       @Valid @RequestBody PropertyPostCreateRequestDto requestDto) {
-        PropertyPostResponseDto responseDto = propertyPostService.createPropertyPost(memberId, requestDto);
+    public DataResponseDto<PropertyPostCreateResponseDto> createPropertyPost(@CurrentMemberId Long memberId,
+                                                                              @Valid @RequestBody PropertyPostCreateRequestDto requestDto) {
+        PropertyPostCreateResponseDto responseDto = propertyPostService.createPropertyPost(memberId, requestDto);
         return new DataResponseDto<>(Code.CREATED_SUCCESS, "매물 게시글 생성에 성공하였습니다.", responseDto);
     }
 

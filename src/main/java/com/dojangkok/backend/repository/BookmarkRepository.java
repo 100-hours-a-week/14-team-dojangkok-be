@@ -18,11 +18,19 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, BookmarkId> 
 
     boolean existsById(BookmarkId bookmarkId);
 
+    @Query("SELECT COUNT(b) FROM Bookmark b " +
+            "WHERE b.member.id = :memberId " +
+            "AND b.propertyPost.deletedAt IS NULL")
+    long countBookmarkedPostsByMemberId(@Param("memberId") Long memberId);
+
     @Query("SELECT b.propertyPost FROM Bookmark b " +
             "WHERE b.member.id = :memberId " +
             "AND b.propertyPost.deletedAt IS NULL " +
             "ORDER BY b.createdAt DESC, b.propertyPost.id DESC")
     List<PropertyPost> findBookmarkedPostsByMemberId(@Param("memberId") Long memberId, Pageable pageable);
+
+    @Query("SELECT b.propertyPost.id FROM Bookmark b WHERE b.member.id = :memberId AND b.propertyPost.id IN :postIds")
+    List<Long> findBookmarkedPostIdsByMemberIdAndPostIds(@Param("memberId") Long memberId, @Param("postIds") List<Long> postIds);
 
     @Query("SELECT b.propertyPost FROM Bookmark b " +
             "WHERE b.member.id = :memberId " +

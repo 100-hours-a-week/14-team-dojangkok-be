@@ -50,13 +50,16 @@ public class PropertyPostListItemDto {
     private PostStatus postStatus;
 
     @JsonProperty("is_verified")
-    private Boolean isVerified;
+    private boolean verified;
 
     @JsonProperty("is_hidden")
-    private boolean isHidden;
+    private boolean hidden;
 
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
+
+    @JsonProperty("is_bookmarked")
+    private boolean bookmarked;
 
     private PropertyPostThumbnailDto thumbnail;
 }
