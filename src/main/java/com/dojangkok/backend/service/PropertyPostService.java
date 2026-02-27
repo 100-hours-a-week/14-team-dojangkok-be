@@ -4,7 +4,6 @@ import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.common.exception.GeneralException;
 import com.dojangkok.backend.common.util.CursorPaginationUtil;
 import com.dojangkok.backend.common.util.FileAssetValidator;
-import com.dojangkok.backend.common.util.PresignedUrlUtil;
 import com.dojangkok.backend.domain.*;
 import com.dojangkok.backend.domain.enums.PostStatus;
 import com.dojangkok.backend.dto.propertypost.*;
@@ -36,7 +35,6 @@ public class PropertyPostService {
     private final S3Service s3Service;
     private final PropertyPostMapper propertyPostMapper;
     private final FileAssetValidator fileAssetValidator;
-    private final PresignedUrlUtil presignedUrlUtil;
 
     // ==================== 매물 게시글 검색/필터링 ====================
 
@@ -112,8 +110,7 @@ public class PropertyPostService {
         boolean isBookmarked = bookmarkRepository.existsById(new BookmarkId(memberId, propertyPostId));
 
         List<PropertyPostImageDto> images = getPropertyPostImages(post.getId());
-        String presignedUrl = s3Service.generatePresignedDownloadUrl(member.getProfileImage());
-        return propertyPostMapper.toPropertyPostResponseDto(member, post, presignedUrl, images, isBookmarked);
+        return propertyPostMapper.toPropertyPostResponseDto(member, post, images, isBookmarked);
     }
 
     // ==================== 스크랩 매물 게시글 목록 조회 ====================
@@ -268,7 +265,7 @@ public class PropertyPostService {
         log.info("PropertyPost updated: id={}, memberId={}", propertyPostId, memberId);
 
         List<PropertyPostImageDto> images = getPropertyPostImages(post.getId());
-        return propertyPostMapper.toPropertyPostResponseDto(member, post, presignedUrlUtil.generatePresignedUrlUtil(member.getProfileImage()), images, false);
+        return propertyPostMapper.toPropertyPostResponseDto(member, post, images, false);
     }
 
     // ==================== 매물 게시글 이미지 첨부 ====================
