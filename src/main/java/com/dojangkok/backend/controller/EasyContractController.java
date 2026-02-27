@@ -66,6 +66,12 @@ public class EasyContractController {
         return new DataResponseDto<>(Code.SUCCESS, "쉬운 계약서 제목 수정에 성공하였습니다.", responseDto);
     }
 
+    @DeleteMapping("/files/{fileAssetId}")
+    public ResponseEntity<Void> deleteFileAsset(@PathVariable Long fileAssetId) {
+        easyContractFileUploadService.deleteFileAsset(fileAssetId);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{easyContractId}")
     public ResponseEntity<Void> deleteEasyContract(@CurrentMemberId Long memberId, @PathVariable Long easyContractId) {
         easyContractService.deleteEasyContract(memberId, easyContractId);
