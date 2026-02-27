@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum ChecklistStatus {
+public enum ChecklistTemplateStatus {
 
     PROCESSING, COMPLETED, FAILED
 }
