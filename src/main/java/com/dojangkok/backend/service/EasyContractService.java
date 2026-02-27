@@ -88,6 +88,7 @@ public class EasyContractService {
         EasyContractMqRequestDto request = EasyContractMqRequestDto.builder()
                 .easyContractId(easyContract.getId())
                 .correlationId(correlationId)
+                .memberId(memberId)
                 .files(fileDtoList)
                 .build();
 
