@@ -1,5 +1,6 @@
 package com.dojangkok.backend.mq.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -7,6 +8,7 @@ import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+@Slf4j
 @Configuration
 public class RabbitMQConfig {
 
@@ -29,7 +31,7 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(EASY_CONTRACT_REQUEST_QUEUE)
                 .deadLetterExchange(DLX_EXCHANGE)
                 .deadLetterRoutingKey("easy-contract.request")
-                .ttl(180000) // 3분
+                .ttl(300000) // 5분
                 .build();
     }
 
@@ -38,7 +40,7 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(CHECKLIST_REQUEST_QUEUE)
                 .deadLetterExchange(DLX_EXCHANGE)
                 .deadLetterRoutingKey("checklist.request")
-                .ttl(180000)
+                .ttl(300000)
                 .build();
     }
 
@@ -47,7 +49,7 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(CANCEL_REQUEST_QUEUE)
                 .deadLetterExchange(DLX_EXCHANGE)
                 .deadLetterRoutingKey("cancel.request")
-                .ttl(180000)
+                .ttl(300000)
                 .build();
     }
 
@@ -56,7 +58,7 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(AI_RESPONSE_QUEUE)
                 .deadLetterExchange(DLX_EXCHANGE)
                 .deadLetterRoutingKey("ai.response")
-                .ttl(180000)
+                .ttl(300000)
                 .build();
     }
 
@@ -153,6 +155,21 @@ public class RabbitMQConfig {
                                          JacksonJsonMessageConverter messageConverter) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter);
+        template.setMandatory(true);
+
+        template.setConfirmCallback((correlationData, ack, cause) -> {
+            if (!ack) {
+                log.error("Publisher Confirm NACK: cause={}, correlationData={}",
+                        cause, correlationData);
+            }
+        });
+
+        template.setReturnsCallback(returned -> {
+            log.error("Mandatory return: exchange={}, routingKey={}, replyCode={}, replyText={}",
+                    returned.getExchange(), returned.getRoutingKey(),
+                    returned.getReplyCode(), returned.getReplyText());
+        });
+
         return template;
     }
 }
