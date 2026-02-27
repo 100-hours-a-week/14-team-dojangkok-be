@@ -91,7 +91,10 @@ public class PropertyPostSearchRepositoryImpl implements PropertyPostSearchRepos
             builder.and(pp.priceMain.loe(request.getPriceMainMax()));
         }
 
-        // 월세 상한
+        // 월세 범위
+        if (request.getPriceMonthlyMin() != null) {
+            builder.and(pp.priceMonthly.goe(request.getPriceMonthlyMin()));
+        }
         if (request.getPriceMonthlyMax() != null) {
             builder.and(pp.priceMonthly.loe(request.getPriceMonthlyMax()));
         }
