@@ -1,4 +1,4 @@
-package com.dojangkok.backend.auth.config;
+package com.dojangkok.backend.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
