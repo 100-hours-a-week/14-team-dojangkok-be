@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -43,7 +41,7 @@ public class PropertyPostService {
     // ==================== 매물 게시글 검색/필터링 ====================
 
     @Transactional(readOnly = true)
-    public PropertyPostSearchResponseDto searchPropertyPosts(PropertyPostSearchRequestDto requestDto, String cursor) {
+    public PropertyPostSearchResponseDto searchPropertyPosts(Long memberId, PropertyPostSearchRequestDto requestDto, String cursor) {
         validateSearchRequest(requestDto);
 
         List<PropertyPost> posts = propertyPostRepository.search(requestDto, cursor, DEFAULT_PAGE_SIZE);
@@ -58,10 +56,12 @@ public class PropertyPostService {
                 ? CursorPaginationUtil.encodeCursor(posts.getLast().getId())
                 : null;
 
+        Set<Long> bookmarkedPostIds = getBookmarkedPostIds(memberId, posts);
+
         List<PropertyPostListItemDto> items = posts.stream()
                 .map(post -> {
                     PropertyPostThumbnailDto thumbnail = getThumbnail(post.getId());
-                    return propertyPostMapper.toPropertyPostListItemDto(post, thumbnail);
+                    return propertyPostMapper.toPropertyPostListItemDto(post, thumbnail, bookmarkedPostIds.contains(post.getId()));
                 })
                 .toList();
 
@@ -82,7 +82,7 @@ public class PropertyPostService {
     }
 
     // ==================== 매물 게시글 목록 조회 ====================
-    public PropertyPostListResponseDto getPropertyPostList(String cursor) {
+    public PropertyPostListResponseDto getPropertyPostList(Long memberId, String cursor) {
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE + 1);
         List<PropertyPost> posts;
 
@@ -93,14 +93,14 @@ public class PropertyPostService {
             posts = propertyPostRepository.findAllActiveAndVisibleWithCursor(cursorId, pageable);
         }
 
-        return buildListResponse(posts);
+        long totalCount = propertyPostRepository.countAllActiveAndVisible();
+        return buildListResponse(memberId, posts, totalCount);
     }
 
     // ==================== 매물 게시글 상세 조회 ====================
 
     @Transactional(readOnly = true)
-    public PropertyPostResponseDto getPropertyPostDetail(Long propertyPostId) {
-        // 삭제된 게시글인지 먼저 확인 (410 Gone 처리)
+    public PropertyPostResponseDto getPropertyPostDetail(Long memberId, Long propertyPostId) {
         PropertyPost post = propertyPostRepository.findByIdIncludingDeleted(propertyPostId)
                 .orElseThrow(() -> new GeneralException(Code.PROPERTY_POST_NOT_FOUND));
         Member member = post.getMember();
@@ -109,9 +109,11 @@ public class PropertyPostService {
             throw new GeneralException(Code.PROPERTY_POST_DELETED);
         }
 
+        boolean isBookmarked = bookmarkRepository.existsById(new BookmarkId(memberId, propertyPostId));
+
         List<PropertyPostImageDto> images = getPropertyPostImages(post.getId());
         String presignedUrl = s3Service.generatePresignedDownloadUrl(member.getProfileImage());
-        return propertyPostMapper.toPropertyPostResponseDto(member, post, presignedUrl, images);
+        return propertyPostMapper.toPropertyPostResponseDto(member, post, presignedUrl, images, isBookmarked);
     }
 
     // ==================== 스크랩 매물 게시글 목록 조회 ====================
@@ -128,7 +130,9 @@ public class PropertyPostService {
             posts = bookmarkRepository.findBookmarkedPostsByMemberIdWithCursor(memberId, cursorId, pageable);
         }
 
-        return buildListResponse(posts);
+        // 스크랩 목록이므로 전부 bookmarked=true
+        long totalCount = bookmarkRepository.countBookmarkedPostsByMemberId(memberId);
+        return buildListResponseAllBookmarked(posts, totalCount);
     }
 
     // ==================== 숨긴 매물 게시글 목록 조회 ====================
@@ -145,13 +149,13 @@ public class PropertyPostService {
             posts = propertyPostRepository.findAllHiddenByMemberIdWithCursor(memberId, cursorId, pageable);
         }
 
-        return buildListResponse(posts);
+        return buildListResponse(memberId, posts, propertyPostRepository.countAllHiddenByMemberId(memberId));
     }
 
     // ==================== 거래 완료 게시글 목록 조회 ====================
 
     @Transactional(readOnly = true)
-    public PropertyPostListResponseDto getCompletedPostList(String cursor) {
+    public PropertyPostListResponseDto getCompletedPostList(Long memberId, String cursor) {
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE + 1);
         List<PropertyPost> posts;
 
@@ -162,13 +166,14 @@ public class PropertyPostService {
             posts = propertyPostRepository.findAllCompletedWithCursor(cursorId, pageable);
         }
 
-        return buildListResponse(posts);
+        long totalCount = propertyPostRepository.countAllCompleted();
+        return buildListResponse(memberId, posts, totalCount);
     }
 
     // ==================== 거래 중 게시글 목록 조회 ====================
 
     @Transactional(readOnly = true)
-    public PropertyPostListResponseDto getTradingPostList(String cursor) {
+    public PropertyPostListResponseDto getTradingPostList(Long memberId, String cursor) {
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE + 1);
         List<PropertyPost> posts;
 
@@ -179,13 +184,14 @@ public class PropertyPostService {
             posts = propertyPostRepository.findAllTradingWithCursor(cursorId, pageable);
         }
 
-        return buildListResponse(posts);
+        long totalCount = propertyPostRepository.countAllTrading();
+        return buildListResponse(memberId, posts, totalCount);
     }
 
     // ==================== 매물 게시글 생성 ====================
 
     @Transactional
-    public PropertyPostResponseDto createPropertyPost(Long memberId, PropertyPostCreateRequestDto requestDto) {
+    public PropertyPostCreateResponseDto createPropertyPost(Long memberId, PropertyPostCreateRequestDto requestDto) {
         validateCreateRequest(requestDto);
 
         Member member = memberRepository.findById(memberId)
@@ -219,8 +225,9 @@ public class PropertyPostService {
 
         log.info("PropertyPost created: id={}, memberId={}", post.getId(), memberId);
 
-        List<PropertyPostImageDto> images = getPropertyPostImages(post.getId());
-        return propertyPostMapper.toPropertyPostResponseDto(member, post, presignedUrlUtil.generatePresignedUrlUtil(member.getProfileImage()), images);
+        return PropertyPostCreateResponseDto.builder()
+                .propertyPostId(post.getId())
+                .build();
     }
 
     // ==================== 매물 게시글 수정 ====================
@@ -261,7 +268,7 @@ public class PropertyPostService {
         log.info("PropertyPost updated: id={}, memberId={}", propertyPostId, memberId);
 
         List<PropertyPostImageDto> images = getPropertyPostImages(post.getId());
-        return propertyPostMapper.toPropertyPostResponseDto(member, post, presignedUrlUtil.generatePresignedUrlUtil(member.getProfileImage()), images);
+        return propertyPostMapper.toPropertyPostResponseDto(member, post, presignedUrlUtil.generatePresignedUrlUtil(member.getProfileImage()), images, false);
     }
 
     // ==================== 매물 게시글 이미지 첨부 ====================
@@ -447,7 +454,35 @@ public class PropertyPostService {
                 .orElse(null);
     }
 
-    private PropertyPostListResponseDto buildListResponse(List<PropertyPost> posts) {
+    private PropertyPostListResponseDto buildListResponse(Long memberId, List<PropertyPost> posts, long totalCount) {
+        boolean hasNext = posts.size() > DEFAULT_PAGE_SIZE;
+        if (hasNext) {
+            posts = posts.subList(0, DEFAULT_PAGE_SIZE);
+        }
+
+        String nextCursor = hasNext && !posts.isEmpty()
+                ? CursorPaginationUtil.encodeCursor(posts.getLast().getId())
+                : null;
+
+        Set<Long> bookmarkedPostIds = getBookmarkedPostIds(memberId, posts);
+
+        List<PropertyPostListItemDto> items = posts.stream()
+                .map(post -> {
+                    PropertyPostThumbnailDto thumbnail = getThumbnail(post.getId());
+                    return propertyPostMapper.toPropertyPostListItemDto(post, thumbnail, bookmarkedPostIds.contains(post.getId()));
+                })
+                .toList();
+
+        return PropertyPostListResponseDto.builder()
+                .totalCount(totalCount)
+                .limit(DEFAULT_PAGE_SIZE)
+                .hasNext(hasNext)
+                .nextCursor(nextCursor)
+                .propertyPostItems(items)
+                .build();
+    }
+
+    private PropertyPostListResponseDto buildListResponseAllBookmarked(List<PropertyPost> posts, long totalCount) {
         boolean hasNext = posts.size() > DEFAULT_PAGE_SIZE;
         if (hasNext) {
             posts = posts.subList(0, DEFAULT_PAGE_SIZE);
@@ -460,16 +495,25 @@ public class PropertyPostService {
         List<PropertyPostListItemDto> items = posts.stream()
                 .map(post -> {
                     PropertyPostThumbnailDto thumbnail = getThumbnail(post.getId());
-                    return propertyPostMapper.toPropertyPostListItemDto(post, thumbnail);
+                    return propertyPostMapper.toPropertyPostListItemDto(post, thumbnail, true);
                 })
                 .toList();
 
         return PropertyPostListResponseDto.builder()
+                .totalCount(totalCount)
                 .limit(DEFAULT_PAGE_SIZE)
                 .hasNext(hasNext)
                 .nextCursor(nextCursor)
                 .propertyPostItems(items)
                 .build();
+    }
+
+    private Set<Long> getBookmarkedPostIds(Long memberId, List<PropertyPost> posts) {
+        if (posts.isEmpty()) {
+            return Set.of();
+        }
+        List<Long> postIds = posts.stream().map(PropertyPost::getId).toList();
+        return new HashSet<>(bookmarkRepository.findBookmarkedPostIdsByMemberIdAndPostIds(memberId, postIds));
     }
 
     private void validateCreateRequest(PropertyPostCreateRequestDto dto) {

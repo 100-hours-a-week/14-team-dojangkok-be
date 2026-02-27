@@ -86,7 +86,7 @@ public class EasyContractFileUploadService {
         // 3. 모든 파일 검증 통과 - presigned URL 생성
         List<PresignedUrlItemResponseDto> fileItems = new ArrayList<>();
         for (PresignedUrlItemRequestDto item : request.getFileItems()) {
-            PresignedUrlItemResponseDto responseItem = fileAssetService.generatePresignedUrlForItem(item);
+            PresignedUrlItemResponseDto responseItem = fileAssetService.generatePresignedUrlForItem(item, "easycontract");
             fileItems.add(responseItem);
         }
 

@@ -34,4 +34,7 @@ public class PropertyPostSearchRequestDto {
     private Integer priceMonthlyMax;
 
     private PropertyPostSort sort;
+
+    @JsonProperty("is_verified")
+    private Boolean isVerified;
 }

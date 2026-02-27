@@ -24,8 +24,8 @@ public class FileAssetService {
      * @return 생성된 응답 DTO
      */
     @Transactional
-    public PresignedUrlItemResponseDto generatePresignedUrlForItem(PresignedUrlItemRequestDto item) {
-        String fileKey = generateFileKey(item.getFileType().name(), item.getFileName());
+    public PresignedUrlItemResponseDto generatePresignedUrlForItem(PresignedUrlItemRequestDto item, String domainPrefix) {
+        String fileKey = generateFileKey(item.getFileType().name(), item.getFileName(), domainPrefix);
 
         FileAsset fileAsset = FileAsset.createFileAsset(
                 fileKey,
@@ -54,11 +54,11 @@ public class FileAssetService {
     }
 
 
-    private String generateFileKey(String fileType, String originalFileName) {
+    private String generateFileKey(String fileType, String originalFileName, String domainPrefix) {
         String uuid = UUID.randomUUID().toString();
         String extension = extractExtension(originalFileName);
 
-        return String.format("%s/%s.%s", fileType.toLowerCase(), uuid, extension);
+        return String.format("%s/%s/%s.%s", fileType.toLowerCase(), domainPrefix, uuid, extension);
     }
 
     private String extractExtension(String fileName) {

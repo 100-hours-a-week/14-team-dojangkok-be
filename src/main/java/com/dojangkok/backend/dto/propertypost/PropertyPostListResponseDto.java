@@ -10,6 +10,9 @@ import java.util.List;
 @Builder
 public class PropertyPostListResponseDto {
 
+    @JsonProperty("total_count")
+    private long totalCount;
+
     private int limit;
 
     @JsonProperty("hasNext")

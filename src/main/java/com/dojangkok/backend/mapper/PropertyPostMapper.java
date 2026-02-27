@@ -13,7 +13,8 @@ import java.util.List;
 @Component
 public class PropertyPostMapper {
 
-    public PropertyPostResponseDto toPropertyPostResponseDto(Member member, PropertyPost post, String presignedUrl, List<PropertyPostImageDto> images) {
+    public PropertyPostResponseDto toPropertyPostResponseDto(Member member, PropertyPost post, String presignedUrl,
+                                                                List<PropertyPostImageDto> images, boolean isBookmarked) {
         String address = post.getAddressMain() + " " + post.getAddressDetail();
 
         return PropertyPostResponseDto.builder()
@@ -38,6 +39,7 @@ public class PropertyPostMapper {
                 .dealStatus(post.getDealStatus())
                 .hidden(post.isHidden())
                 .verified(post.getIsVerified())
+                .bookmarked(isBookmarked)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .images(images)
@@ -78,7 +80,7 @@ public class PropertyPostMapper {
                 .build();
     }
 
-    public PropertyPostListItemDto toPropertyPostListItemDto(PropertyPost post, PropertyPostThumbnailDto thumbnail) {
+    public PropertyPostListItemDto toPropertyPostListItemDto(PropertyPost post, PropertyPostThumbnailDto thumbnail, boolean isBookmarked) {
         return PropertyPostListItemDto.builder()
                 .propertyPostId(post.getId())
                 .title(post.getTitle())
@@ -92,9 +94,10 @@ public class PropertyPostMapper {
                 .maintenanceFee(post.getMaintenanceFee())
                 .dealStatus(post.getDealStatus())
                 .postStatus(post.getPostStatus())
-                .isVerified(post.getIsVerified())
-                .isHidden(post.isHidden())
+                .verified(post.getIsVerified())
+                .hidden(post.isHidden())
                 .createdAt(post.getCreatedAt())
+                .bookmarked(isBookmarked)
                 .thumbnail(thumbnail)
                 .build();
     }

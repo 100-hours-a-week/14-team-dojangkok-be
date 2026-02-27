@@ -6,7 +6,7 @@ import com.dojangkok.backend.common.util.CorrelationIdGenerator;
 import com.dojangkok.backend.domain.ChecklistTemplate;
 import com.dojangkok.backend.domain.ChecklistTemplateItem;
 import com.dojangkok.backend.domain.LifestyleVersion;
-import com.dojangkok.backend.domain.enums.ChecklistStatus;
+import com.dojangkok.backend.domain.enums.ChecklistTemplateStatus;
 import com.dojangkok.backend.dto.checklist.ChecklistGenerateRequestDto;
 import com.dojangkok.backend.mapper.ChecklistTemplateMapper;
 import com.dojangkok.backend.mq.ChecklistMqProducer;
@@ -37,11 +37,9 @@ public class ChecklistTemplateService {
         LifestyleVersion lifestyleVersion = lifestyleVersionRepository.findById(lifestyleVersionId)
                 .orElseThrow(() -> new GeneralException(Code.LIFESTYLE_VERSION_NOT_FOUND));
 
-        // 1) ChecklistTemplate 생성 (PROCESSING)
         ChecklistTemplate checklistTemplate = ChecklistTemplate.createChecklistTemplate(lifestyleVersion);
         checklistTemplateRepository.save(checklistTemplate);
 
-        // 2) correlationId 생성 + MQ publish
         String correlationId = CorrelationIdGenerator.generate();
         ChecklistGenerateRequestDto generateRequest =
                 checklistTemplateMapper.toChecklistGenerateRequestDto(lifestyleItems);
@@ -64,12 +62,19 @@ public class ChecklistTemplateService {
         ChecklistTemplate template = checklistTemplateRepository.findById(templateId)
                 .orElseThrow(() -> new GeneralException(Code.CHECKLIST_TEMPLATE_NOT_FOUND));
 
+        // 멱등성 체크: PROCESSING 상태일 때만 처리
+        if (template.getChecklistTemplateStatus() != ChecklistTemplateStatus.PROCESSING) {
+            log.info("Checklist already processed, skipping: templateId={}, status={}",
+                    templateId, template.getChecklistTemplateStatus());
+            return;
+        }
+
         if (checklists != null && !checklists.isEmpty()) {
             saveChecklistTemplateItems(template, checklists);
-            updateTemplateStatus(template, ChecklistStatus.COMPLETED);
+            updateTemplateStatus(template, ChecklistTemplateStatus.COMPLETED);
             log.info("Checklist template generation completed for templateId: {}", templateId);
         } else {
-            updateTemplateStatus(template, ChecklistStatus.FAILED);
+            updateTemplateStatus(template, ChecklistTemplateStatus.FAILED);
             log.warn("Checklist template generation failed - empty checklists for templateId: {}", templateId);
         }
     }
@@ -78,7 +83,7 @@ public class ChecklistTemplateService {
     public void handleGenerationFailure(Long lifestyleVersionId) {
         checklistTemplateRepository.findByLifestyleVersionId(lifestyleVersionId)
                 .ifPresent(template -> {
-                    template.updateStatus(ChecklistStatus.FAILED);
+                    template.updateStatus(ChecklistTemplateStatus.FAILED);
                     checklistTemplateRepository.save(template);
                 });
     }
@@ -90,8 +95,8 @@ public class ChecklistTemplateService {
         checklistTemplateItemRepository.saveAll(items);
     }
 
-    private void updateTemplateStatus(ChecklistTemplate checklistTemplate, ChecklistStatus checklistStatus) {
-        checklistTemplate.updateStatus(checklistStatus);
+    private void updateTemplateStatus(ChecklistTemplate checklistTemplate, ChecklistTemplateStatus checklistTemplateStatus) {
+        checklistTemplate.updateStatus(checklistTemplateStatus);
         checklistTemplateRepository.save(checklistTemplate);
     }
 }

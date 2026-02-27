@@ -29,6 +29,13 @@ public interface PropertyPostRepository extends JpaRepository<PropertyPost, Long
             "ORDER BY pp.createdAt DESC, pp.id DESC")
     List<PropertyPost> findAllActiveAndVisible(Pageable pageable);
 
+    @Query("SELECT COUNT(pp) FROM PropertyPost pp " +
+            "WHERE pp.deletedAt IS NULL " +
+            "AND pp.isHidden = false " +
+            "AND pp.postStatus = com.dojangkok.backend.domain.enums.PostStatus.ACTIVE " +
+            "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.TRADING")
+    long countAllActiveAndVisible();
+
     @Query("SELECT pp FROM PropertyPost pp " +
             "WHERE pp.deletedAt IS NULL " +
             "AND pp.isHidden = false " +
@@ -49,6 +56,12 @@ public interface PropertyPostRepository extends JpaRepository<PropertyPost, Long
             "ORDER BY pp.createdAt DESC, pp.id DESC")
     List<PropertyPost> findAllHiddenByMemberId(@Param("memberId") Long memberId, Pageable pageable);
 
+    @Query("SELECT COUNT(pp) FROM PropertyPost pp " +
+            "WHERE pp.member.id = :memberId " +
+            "AND pp.deletedAt IS NULL " +
+            "AND pp.isHidden = true")
+    long countAllHiddenByMemberId(@Param("memberId") Long memberId);
+
     @Query("SELECT pp FROM PropertyPost pp " +
             "WHERE pp.member.id = :memberId " +
             "AND pp.deletedAt IS NULL " +
@@ -65,6 +78,12 @@ public interface PropertyPostRepository extends JpaRepository<PropertyPost, Long
             "ORDER BY pp.createdAt DESC, pp.id DESC")
     List<PropertyPost> findAllCompleted(Pageable pageable);
 
+    @Query("SELECT COUNT(pp) FROM PropertyPost pp " +
+            "WHERE pp.deletedAt IS NULL " +
+            "AND pp.isHidden = false " +
+            "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.COMPLETED")
+    long countAllCompleted();
+
     @Query("SELECT pp FROM PropertyPost pp " +
             "WHERE pp.deletedAt IS NULL " +
             "AND pp.isHidden = false " +
@@ -80,6 +99,12 @@ public interface PropertyPostRepository extends JpaRepository<PropertyPost, Long
             "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.TRADING " +
             "ORDER BY pp.createdAt DESC, pp.id DESC")
     List<PropertyPost> findAllTrading(Pageable pageable);
+
+    @Query("SELECT COUNT(pp) FROM PropertyPost pp " +
+            "WHERE pp.deletedAt IS NULL " +
+            "AND pp.isHidden = false " +
+            "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.TRADING")
+    long countAllTrading();
 
     @Query("SELECT pp FROM PropertyPost pp " +
             "WHERE pp.deletedAt IS NULL " +

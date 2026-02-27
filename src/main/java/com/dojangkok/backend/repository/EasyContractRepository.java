@@ -1,12 +1,14 @@
 package com.dojangkok.backend.repository;
 
 import com.dojangkok.backend.domain.EasyContract;
+import com.dojangkok.backend.domain.enums.EasyContractStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,4 +30,11 @@ public interface EasyContractRepository extends JpaRepository<EasyContract, Long
 
     @Query("SELECT COUNT(ec) FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.status = 'COMPLETED' AND ec.deletedAt IS NULL")
     int countCompletedByMemberId(@Param("memberId") Long memberId);
+
+    @Query("SELECT ec FROM EasyContract ec " +
+            "JOIN FETCH ec.member " +
+            "WHERE ec.status = :status AND ec.createdAt < :threshold")
+    List<EasyContract> findAllByStatusAndCreatedAtBefore(
+            @Param("status") EasyContractStatus status,
+            @Param("threshold") LocalDateTime threshold);
 }

@@ -63,6 +63,9 @@ public class PropertyPostResponseDto {
     @JsonProperty("is_verified")
     private Boolean verified;
 
+    @JsonProperty("is_bookmarked")
+    private boolean bookmarked;
+
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
 

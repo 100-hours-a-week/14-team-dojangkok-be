@@ -99,6 +99,11 @@ public class PropertyPostSearchRepositoryImpl implements PropertyPostSearchRepos
             builder.and(pp.priceMonthly.loe(request.getPriceMonthlyMax()));
         }
 
+        // 검증 완료 필터
+        if (request.getIsVerified() != null) {
+            builder.and(pp.isVerified.eq(request.getIsVerified()));
+        }
+
         return builder;
     }
 

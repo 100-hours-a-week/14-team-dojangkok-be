@@ -102,8 +102,10 @@ public class EasyContractService {
         EasyContract easyContract = easyContractRepository.findById(response.getEasyContractId())
                 .orElseThrow(() -> new GeneralException(Code.EASY_CONTRACT_NOT_FOUND));
 
-        if (easyContract.isCancelled()) {
-            log.info("EasyContract already cancelled, ignoring result: id={}", response.getEasyContractId());
+        // 멱등성 체크: PROCESSING 상태일 때만 처리
+        if (easyContract.getStatus() != EasyContractStatus.PROCESSING) {
+            log.info("EasyContract already processed, skipping: id={}, status={}",
+                    response.getEasyContractId(), easyContract.getStatus());
             return;
         }
 
