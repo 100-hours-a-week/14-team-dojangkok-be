@@ -123,10 +123,9 @@ public class PropertyPostController {
     }
 
     // 매물 게시글 이미지 삭제
-    @DeleteMapping("/{propertyPostId}/files/{fileId}")
-    public ResponseEntity<Void> deletePropertyPostFile(@CurrentMemberId Long memberId, @PathVariable Long propertyPostId,
-                                                       @PathVariable Long fileId) {
-        propertyPostService.deletePropertyPostFile(memberId, propertyPostId, fileId);
+    @DeleteMapping("/files/{fileAssetId}")
+    public ResponseEntity<Void> deletePropertyPostFile(@CurrentMemberId Long memberId, @PathVariable Long fileId) {
+        propertyPostService.deletePropertyPostFile(memberId, fileId);
         return ResponseEntity.noContent().build();
     }
 

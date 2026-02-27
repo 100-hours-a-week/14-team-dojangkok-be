@@ -4,7 +4,6 @@ import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.common.exception.GeneralException;
 import com.dojangkok.backend.common.util.CursorPaginationUtil;
 import com.dojangkok.backend.common.util.FileAssetValidator;
-import com.dojangkok.backend.common.util.PresignedUrlUtil;
 import com.dojangkok.backend.domain.*;
 import com.dojangkok.backend.domain.enums.PostStatus;
 import com.dojangkok.backend.dto.propertypost.*;
@@ -36,9 +35,8 @@ public class PropertyPostService {
     private final S3Service s3Service;
     private final PropertyPostMapper propertyPostMapper;
     private final FileAssetValidator fileAssetValidator;
-    private final PresignedUrlUtil presignedUrlUtil;
+    private final FileAssetRepository fileAssetRepository;
 
-    // ==================== 매물 게시글 검색/필터링 ====================
 
     @Transactional(readOnly = true)
     public PropertyPostSearchResponseDto searchPropertyPosts(Long memberId, PropertyPostSearchRequestDto requestDto, String cursor) {
@@ -81,7 +79,6 @@ public class PropertyPostService {
         return PropertyPostSearchCountResponseDto.builder().count(count).build();
     }
 
-    // ==================== 매물 게시글 목록 조회 ====================
     public PropertyPostListResponseDto getPropertyPostList(Long memberId, String cursor) {
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE + 1);
         List<PropertyPost> posts;
@@ -97,8 +94,6 @@ public class PropertyPostService {
         return buildListResponse(memberId, posts, totalCount);
     }
 
-    // ==================== 매물 게시글 상세 조회 ====================
-
     @Transactional(readOnly = true)
     public PropertyPostResponseDto getPropertyPostDetail(Long memberId, Long propertyPostId) {
         PropertyPost post = propertyPostRepository.findByIdIncludingDeleted(propertyPostId)
@@ -112,11 +107,8 @@ public class PropertyPostService {
         boolean isBookmarked = bookmarkRepository.existsById(new BookmarkId(memberId, propertyPostId));
 
         List<PropertyPostImageDto> images = getPropertyPostImages(post.getId());
-        String presignedUrl = s3Service.generatePresignedDownloadUrl(member.getProfileImage());
-        return propertyPostMapper.toPropertyPostResponseDto(member, post, presignedUrl, images, isBookmarked);
+        return propertyPostMapper.toPropertyPostResponseDto(member, post, images, isBookmarked);
     }
-
-    // ==================== 스크랩 매물 게시글 목록 조회 ====================
 
     @Transactional(readOnly = true)
     public PropertyPostListResponseDto getBookmarkedPostList(Long memberId, String cursor) {
@@ -130,12 +122,9 @@ public class PropertyPostService {
             posts = bookmarkRepository.findBookmarkedPostsByMemberIdWithCursor(memberId, cursorId, pageable);
         }
 
-        // 스크랩 목록이므로 전부 bookmarked=true
         long totalCount = bookmarkRepository.countBookmarkedPostsByMemberId(memberId);
         return buildListResponseAllBookmarked(posts, totalCount);
     }
-
-    // ==================== 숨긴 매물 게시글 목록 조회 ====================
 
     @Transactional(readOnly = true)
     public PropertyPostListResponseDto getHiddenPostList(Long memberId, String cursor) {
@@ -151,8 +140,6 @@ public class PropertyPostService {
 
         return buildListResponse(memberId, posts, propertyPostRepository.countAllHiddenByMemberId(memberId));
     }
-
-    // ==================== 거래 완료 게시글 목록 조회 ====================
 
     @Transactional(readOnly = true)
     public PropertyPostListResponseDto getCompletedPostList(Long memberId, String cursor) {
@@ -170,8 +157,6 @@ public class PropertyPostService {
         return buildListResponse(memberId, posts, totalCount);
     }
 
-    // ==================== 거래 중 게시글 목록 조회 ====================
-
     @Transactional(readOnly = true)
     public PropertyPostListResponseDto getTradingPostList(Long memberId, String cursor) {
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE + 1);
@@ -187,8 +172,6 @@ public class PropertyPostService {
         long totalCount = propertyPostRepository.countAllTrading();
         return buildListResponse(memberId, posts, totalCount);
     }
-
-    // ==================== 매물 게시글 생성 ====================
 
     @Transactional
     public PropertyPostCreateResponseDto createPropertyPost(Long memberId, PropertyPostCreateRequestDto requestDto) {
@@ -230,8 +213,6 @@ public class PropertyPostService {
                 .build();
     }
 
-    // ==================== 매물 게시글 수정 ====================
-
     @Transactional
     public PropertyPostResponseDto updatePropertyPost(Long memberId, Long propertyPostId, PropertyPostUpdateRequestDto requestDto) {
         PropertyPost post = getPropertyPostWithOwnerCheck(memberId, propertyPostId);
@@ -268,10 +249,8 @@ public class PropertyPostService {
         log.info("PropertyPost updated: id={}, memberId={}", propertyPostId, memberId);
 
         List<PropertyPostImageDto> images = getPropertyPostImages(post.getId());
-        return propertyPostMapper.toPropertyPostResponseDto(member, post, presignedUrlUtil.generatePresignedUrlUtil(member.getProfileImage()), images, false);
+        return propertyPostMapper.toPropertyPostResponseDto(member, post, images, false);
     }
-
-    // ==================== 매물 게시글 이미지 첨부 ====================
 
     @Transactional
     public PropertyPostFileAttachResponseDto attachFiles(Long memberId, Long propertyPostId,
@@ -309,32 +288,33 @@ public class PropertyPostService {
         return PropertyPostFileAttachResponseDto.builder().items(items).build();
     }
 
-    // ==================== 매물 게시글 이미지 삭제 ====================
-
     @Transactional
-    public void deletePropertyPostFile(Long memberId, Long propertyPostId, Long fileId) {
-        getPropertyPostWithOwnerCheck(memberId, propertyPostId);
+    public void deletePropertyPostFile(Long memberId, Long fileAssetId) {
+        FileAsset fileAsset = getFileAssetWithOwnerCheck(memberId, fileAssetId);
 
-        PropertyPostFile ppf = propertyPostFileRepository.findByFileAssetIdAndPropertyPostId(fileId, propertyPostId)
-                .orElseThrow(() -> new GeneralException(Code.PROPERTY_POST_FILE_NOT_FOUND));
+        // 게시글에 첨부된 파일인지 확인
+        Optional<PropertyPostFile> propertyPostFileOpt = propertyPostFileRepository.findByFileAssetId(fileAssetId);
 
-        boolean wasPrimary = ppf.isPrimary();
+        if (propertyPostFileOpt.isPresent()) {
+            PropertyPostFile propertyPostFile = propertyPostFileOpt.get();
+            Long propertyPostId = propertyPostFile.getPropertyPost().getId();
+            boolean wasPrimary = propertyPostFile.isPrimary();
 
-        // is_primary였던 이미지가 삭제되면 다음 순번 이미지를 primary로 변경
-        if (wasPrimary) {
-            propertyPostFileRepository.findNextPrimaryCandidate(propertyPostId, ppf.getId())
-                    .ifPresent(PropertyPostFile::markAsPrimary);
+            // 첨부 정보 삭제
+            propertyPostFileRepository.delete(propertyPostFile);
+
+            // is_primary였던 이미지가 삭제되면 다음 순번 이미지를 primary로 변경
+            if (wasPrimary) {
+                propertyPostFileRepository.findNextPrimaryCandidate(propertyPostId, propertyPostFile.getId())
+                        .ifPresent(PropertyPostFile::markAsPrimary);
+            }
+
+            log.info("PropertyPostFile detached and deleted: fileAssetId={}, propertyPostId={}, wasPrimary={}", fileAssetId, propertyPostId, wasPrimary);
         }
 
-        FileAsset fileAsset = ppf.getFileAsset();
         fileAsset.softDelete();
-
-        propertyPostFileRepository.delete(ppf);
-
-        log.info("PropertyPostFile deleted: fileId={}, propertyPostId={}, wasPrimary={}", fileId, propertyPostId, wasPrimary);
+        log.info("FileAsset soft deleted: fileAssetId={}", fileAssetId);
     }
-
-    // ==================== 거래 상태 변경 ====================
 
     @Transactional
     public PropertyPostDealStatusUpdateResponseDto updateDealStatus(Long memberId, Long propertyPostId,
@@ -370,8 +350,6 @@ public class PropertyPostService {
         return propertyPostMapper.toPostVisibilityUpdateResponseDto(post);
     }
 
-    // ==================== 매물 게시글 삭제 ====================
-
     @Transactional
     public void deletePropertyPost(Long memberId, Long propertyPostId) {
         PropertyPost post = getPropertyPostWithOwnerCheck(memberId, propertyPostId);
@@ -379,8 +357,6 @@ public class PropertyPostService {
 
         log.info("PropertyPost soft deleted: id={}, memberId={}", propertyPostId, memberId);
     }
-
-    // ==================== 스크랩 추가 ====================
 
     @Transactional
     public void addBookmark(Long memberId, Long propertyPostId) {
@@ -401,8 +377,6 @@ public class PropertyPostService {
         log.info("Bookmark added: memberId={}, propertyPostId={}", memberId, propertyPostId);
     }
 
-    // ==================== 스크랩 제거 ====================
-
     @Transactional
     public void removeBookmark(Long memberId, Long propertyPostId) {
         propertyPostRepository.findByIdAndNotDeleted(propertyPostId)
@@ -418,8 +392,6 @@ public class PropertyPostService {
         log.info("Bookmark removed: memberId={}, propertyPostId={}", memberId, propertyPostId);
     }
 
-    // ==================== Private Helper Methods ====================
-
     private PropertyPost getPropertyPostWithOwnerCheck(Long memberId, Long propertyPostId) {
         PropertyPost post = propertyPostRepository.findByIdAndNotDeleted(propertyPostId)
                 .orElseThrow(() -> new GeneralException(Code.PROPERTY_POST_NOT_FOUND));
@@ -429,6 +401,25 @@ public class PropertyPostService {
         }
 
         return post;
+    }
+
+    private FileAsset getFileAssetWithOwnerCheck(Long memberId, Long fileAssetId) {
+        FileAsset fileAsset = fileAssetRepository.findById(fileAssetId)
+                .orElseThrow(() -> new GeneralException(Code.FILE_NOT_FOUND));
+
+        if (fileAsset.getDeletedAt() != null) {
+            throw new GeneralException(Code.FILE_NOT_FOUND);
+        }
+
+        // PropertyPostFile로 연결된 게시글이 있으면 소유자 확인
+        propertyPostFileRepository.findByFileAssetId(fileAssetId)
+                .ifPresent(ppf -> {
+                    if (!ppf.getPropertyPost().getMember().getId().equals(memberId)) {
+                        throw new GeneralException(Code.PROPERTY_POST_FORBIDDEN);
+                    }
+                });
+
+        return fileAsset;
     }
 
     private List<PropertyPostImageDto> getPropertyPostImages(Long propertyPostId) {

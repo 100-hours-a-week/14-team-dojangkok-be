@@ -13,15 +13,15 @@ import java.util.List;
 @Component
 public class PropertyPostMapper {
 
-    public PropertyPostResponseDto toPropertyPostResponseDto(Member member, PropertyPost post, String presignedUrl,
-                                                                List<PropertyPostImageDto> images, boolean isBookmarked) {
+    public PropertyPostResponseDto toPropertyPostResponseDto(Member member, PropertyPost post,
+                                                             List<PropertyPostImageDto> images, boolean isBookmarked) {
         String address = post.getAddressMain() + " " + post.getAddressDetail();
 
         return PropertyPostResponseDto.builder()
                 .writer(PostWriterInfoDto.builder()
                         .memberId(member.getId())
                         .nickname(member.getNickname())
-                        .profileImageUrl(presignedUrl)
+                        .profileImageUrl(member.getProfileImage())
                         .build())
                 .propertyPostId(post.getId())
                 .title(post.getTitle())
