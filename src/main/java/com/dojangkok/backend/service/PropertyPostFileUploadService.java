@@ -35,8 +35,11 @@ public class PropertyPostFileUploadService {
             "image/png"
     );
 
+    private static final int MAX_IMAGE_COUNT = 20;
+
     private final FileAssetService fileAssetService;
     private final FileAssetRepository fileAssetRepository;
+    private final PropertyPostFileRepository propertyPostFileRepository;
     private final S3Service s3Service;
     private final FileAssetMapper fileAssetMapper;
 
@@ -47,9 +50,19 @@ public class PropertyPostFileUploadService {
 
         int requestCount = request.getFileItems().size();
 
-        if (requestCount > 50) {
-            log.warn("Property post file count exceeded: request={}, max=50", requestCount);
+        if (requestCount > MAX_IMAGE_COUNT) {
+            log.warn("Property post file count exceeded: request={}, max={}", requestCount, MAX_IMAGE_COUNT);
             throw new GeneralException(Code.FILE_COUNT_EXCEEDED);
+        }
+
+        // 수정 시: 기존 이미지 개수 + 새 요청 개수 > MAX_IMAGE_COUNT 이면 전체 실패
+        if (request.getPropertyPostId() != null) {
+            long existingCount = propertyPostFileRepository.countByPropertyPostId(request.getPropertyPostId());
+            if (existingCount + requestCount > MAX_IMAGE_COUNT) {
+                log.warn("Total image count exceeded: propertyPostId={}, existing={}, new={}, max={}",
+                        request.getPropertyPostId(), existingCount, requestCount, MAX_IMAGE_COUNT);
+                throw new GeneralException(Code.FILE_COUNT_EXCEEDED);
+            }
         }
 
         for (PresignedUrlItemRequestDto item : request.getFileItems()) {

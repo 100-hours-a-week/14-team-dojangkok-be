@@ -233,6 +233,16 @@ public class PropertyPostService {
             validatePrice(requestDto.getPriceMain());
         }
 
+        // 면적 검증
+        if (requestDto.getExclusiveAreaM2() != null) {
+            validateArea(requestDto.getExclusiveAreaM2());
+        }
+
+        // 층수 검증
+        if (requestDto.getFloor() != null) {
+            validateFloor(requestDto.getFloor());
+        }
+
         // EasyContract 연결 변경
         EasyContract easyContract = null;
         Boolean isVerified = null;
@@ -242,8 +252,10 @@ public class PropertyPostService {
             isVerified = true;
         }
 
-        post.update(requestDto.getTitle(), requestDto.getPriceMain(),
-                requestDto.getPriceMonthly(), requestDto.getContent(),
+        post.update(requestDto.getTitle(), requestDto.getAddressMain(), requestDto.getAddressDetail(),
+                requestDto.getPriceMain(), requestDto.getPriceMonthly(), requestDto.getContent(),
+                requestDto.getPropertyType(), requestDto.getRentType(),
+                requestDto.getExclusiveAreaM2(), requestDto.getIsBasement(), requestDto.getFloor(), requestDto.getMaintenanceFee(),
                 easyContract, isVerified);
 
         log.info("PropertyPost updated: id={}, memberId={}", propertyPostId, memberId);
@@ -263,16 +275,24 @@ public class PropertyPostService {
 
         Map<Long, FileAsset> fileAssetMap = fileAssetValidator.validateAndGetFileAssets(fileAssetIds);
 
-        int maxSortOrder = propertyPostFileRepository.findMaxSortOrderByPropertyPostId(propertyPostId).orElse(0);
-        boolean hasPrimary = maxSortOrder > 0;
+        // 기존 첨부 파일이 있으면 모두 삭제 (soft delete + 첨부 정보 제거)
+        List<PropertyPostFile> existingFiles = propertyPostFileRepository.findAllByPropertyPostIdWithFileAsset(propertyPostId);
+        if (!existingFiles.isEmpty()) {
+            for (PropertyPostFile existingFile : existingFiles) {
+                existingFile.getFileAsset().softDelete();
+            }
+            propertyPostFileRepository.deleteAll(existingFiles);
+            log.info("Existing files removed from PropertyPost: propertyPostId={}, count={}", propertyPostId, existingFiles.size());
+        }
 
+        // 새 파일 첨부
         List<PropertyPostFile> newFiles = new ArrayList<>();
-        int sortOrder = maxSortOrder;
+        int sortOrder = 0;
 
         for (Long fileAssetId : fileAssetIds) {
             FileAsset fileAsset = fileAssetMap.get(fileAssetId);
             sortOrder++;
-            boolean isPrimary = !hasPrimary && sortOrder == 1;
+            boolean isPrimary = sortOrder == 1;
             PropertyPostFile ppf = PropertyPostFile.createPropertyPostFile(fileAsset, sortOrder, isPrimary, post);
             newFiles.add(ppf);
         }

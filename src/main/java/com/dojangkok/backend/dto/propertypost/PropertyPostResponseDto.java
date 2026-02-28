@@ -24,7 +24,11 @@ public class PropertyPostResponseDto {
 
     private String title;
 
-    private String address;
+    @JsonProperty("address_main")
+    private String addressMain;
+
+    @JsonProperty("address_detail")
+    private String addressDetail;
 
     @JsonProperty("price_main")
     private Long priceMain;
