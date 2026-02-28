@@ -37,24 +37,18 @@ public class PropertyPostFileUploadService {
 
     private final FileAssetService fileAssetService;
     private final FileAssetRepository fileAssetRepository;
-    private final PropertyPostFileRepository propertyPostFileRepository;
     private final S3Service s3Service;
     private final FileAssetMapper fileAssetMapper;
 
-    /**
-     * 매물 게시글 파일 업로드 준비 (부분 실패 허용)
-     */
     @Transactional
-    public PropertyPostFileUploadResponseDto generatePresignedUrls(Long propertyPostId, PropertyPostFileUploadRequestDto request) {
+    public PropertyPostFileUploadResponseDto generatePresignedUrls(PropertyPostFileUploadRequestDto request) {
         List<PresignedUrlItemResponseDto> successItems = new ArrayList<>();
         List<PropertyPostFileUploadFailedItemDto> failedItems = new ArrayList<>();
 
         int requestCount = request.getFileItems().size();
-        long existingCount = propertyPostFileRepository.countByPropertyPostId(propertyPostId);
 
-        if (existingCount + requestCount > 50) {
-            log.warn("Property post file count exceeded: propertyPostId={}, existing={}, request={}, max=50",
-                    propertyPostId, existingCount, requestCount);
+        if (requestCount > 50) {
+            log.warn("Property post file count exceeded: request={}, max=50", requestCount);
             throw new GeneralException(Code.FILE_COUNT_EXCEEDED);
         }
 
@@ -89,8 +83,8 @@ public class PropertyPostFileUploadService {
             successItems.add(responseItem);
         }
 
-        log.info("Property post file upload prepared: propertyPostId={}, successCount={}, failedCount={}",
-                propertyPostId, successItems.size(), failedItems.size());
+        log.info("Property post file upload prepared: successCount={}, failedCount={}",
+                successItems.size(), failedItems.size());
 
         return PropertyPostFileUploadResponseDto.builder()
                 .successFileItems(successItems)
