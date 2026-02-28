@@ -100,10 +100,9 @@ public class PropertyPostController {
     }
 
     // 매물 게시글 파일 업로드 준비 (Presigned URL 발급)
-    @PostMapping("/{propertyPostId}/files/presigned-urls")
-    public DataResponseDto<PropertyPostFileUploadResponseDto> generatePresignedUrls(@PathVariable Long propertyPostId,
-                                                                                    @RequestBody @Valid PropertyPostFileUploadRequestDto requestDto) {
-        PropertyPostFileUploadResponseDto responseDto = propertyPostFileUploadService.generatePresignedUrls(propertyPostId, requestDto);
+    @PostMapping("/files/presigned-urls")
+    public DataResponseDto<PropertyPostFileUploadResponseDto> generatePresignedUrls(@RequestBody @Valid PropertyPostFileUploadRequestDto requestDto) {
+        PropertyPostFileUploadResponseDto responseDto = propertyPostFileUploadService.generatePresignedUrls(requestDto);
         return new DataResponseDto<>(Code.SUCCESS, "Presigned URL 발급에 성공하였습니다.", responseDto);
     }
 
@@ -124,8 +123,8 @@ public class PropertyPostController {
 
     // 매물 게시글 이미지 삭제
     @DeleteMapping("/files/{fileAssetId}")
-    public ResponseEntity<Void> deletePropertyPostFile(@CurrentMemberId Long memberId, @PathVariable Long fileId) {
-        propertyPostService.deletePropertyPostFile(memberId, fileId);
+    public ResponseEntity<Void> deletePropertyPostFile(@CurrentMemberId Long memberId, @PathVariable Long fileAssetId) {
+        propertyPostService.deletePropertyPostFile(memberId, fileAssetId);
         return ResponseEntity.noContent().build();
     }
 
