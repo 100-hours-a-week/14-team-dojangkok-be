@@ -167,12 +167,23 @@ public class PropertyPost extends BaseTimeEntity {
                 .build();
     }
 
-    public void update(String title, Long priceMain, Integer priceMonthly, String content,
+    public void update(String title, String addressMain, String addressDetail,
+                       Long priceMain, Integer priceMonthly, String content,
+                       PropertyType propertyType, RentType rentType,
+                       BigDecimal exclusiveAreaM2, Boolean isBasement, BigDecimal floor, Integer maintenanceFee,
                        EasyContract easyContract, Boolean isVerified) {
         if (title != null) this.title = title;
+        if (addressMain != null) this.addressMain = addressMain;
+        if (addressDetail != null) this.addressDetail = addressDetail;
         if (priceMain != null) this.priceMain = priceMain;
         if (priceMonthly != null) this.priceMonthly = priceMonthly;
         if (content != null) this.content = content;
+        if (propertyType != null) this.propertyType = propertyType;
+        if (rentType != null) this.rentType = rentType;
+        if (exclusiveAreaM2 != null) this.exclusiveAreaM2 = exclusiveAreaM2;
+        if (isBasement != null) this.isBasement = isBasement;
+        if (floor != null) this.floor = floor;
+        if (maintenanceFee != null) this.maintenanceFee = maintenanceFee;
         if (easyContract != null) {
             this.easyContract = easyContract;
             this.isVerified = isVerified;
