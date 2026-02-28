@@ -14,6 +14,9 @@ import java.util.List;
 @NoArgsConstructor
 public class PropertyPostFileUploadRequestDto {
 
+    @JsonProperty("property_post_id")
+    private Long propertyPostId;
+
     @Valid
     @NotEmpty(message = "업로드할 파일 정보가 필요합니다.")
     @Size(max = 20, message = "한 번에 최대 20개의 파일만 업로드할 수 있습니다.")

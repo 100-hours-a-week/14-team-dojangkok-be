@@ -15,8 +15,6 @@ public class PropertyPostMapper {
 
     public PropertyPostResponseDto toPropertyPostResponseDto(Member member, PropertyPost post,
                                                              List<PropertyPostImageDto> images, boolean isBookmarked) {
-        String address = post.getAddressMain() + " " + post.getAddressDetail();
-
         return PropertyPostResponseDto.builder()
                 .writer(PostWriterInfoDto.builder()
                         .memberId(member.getId())
@@ -25,7 +23,8 @@ public class PropertyPostMapper {
                         .build())
                 .propertyPostId(post.getId())
                 .title(post.getTitle())
-                .address(address)
+                .addressMain(post.getAddressMain())
+                .addressDetail(post.getAddressDetail())
                 .priceMain(post.getPriceMain())
                 .priceMonthly(post.getPriceMonthly())
                 .content(post.getContent())
