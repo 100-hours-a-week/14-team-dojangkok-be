@@ -29,7 +29,7 @@ public class PropertyPostController {
     }
 
     // 매물 게시글 검색/필터링 - 개수만
-    @PostMapping("/searches/count")
+    @PostMapping("/searches/counts")
     public DataResponseDto<PropertyPostSearchCountResponseDto> countPropertyPosts(@Valid @RequestBody PropertyPostSearchRequestDto requestDto) {
         PropertyPostSearchCountResponseDto responseDto = propertyPostService.countPropertyPosts(requestDto);
         return new DataResponseDto<>(Code.SUCCESS, "매물 개수 조회에 성공하였습니다.", responseDto);
