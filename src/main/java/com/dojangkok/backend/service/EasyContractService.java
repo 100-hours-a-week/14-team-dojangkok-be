@@ -161,8 +161,10 @@ public class EasyContractService {
                 .map(easyContractMapper::toEasyContractListItemDto)
                 .toList();
 
+        long totalCount = easyContractRepository.countAllCompletedByMemberId(memberId);
+
         return easyContractMapper.toEasyContractListResponseDto(
-                items, DEFAULT_PAGE_SIZE, paginationResult.hasNext(), paginationResult.nextCursor());
+                items, totalCount, DEFAULT_PAGE_SIZE, paginationResult.hasNext(), paginationResult.nextCursor());
     }
 
     @Transactional(readOnly = true)

@@ -14,7 +14,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceClientConfigurat
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 @Slf4j
@@ -54,13 +54,6 @@ public class RedisConfig {
     @RefreshScope
     public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
         return new StringRedisTemplate(connectionFactory);
-    }
-
-    @Bean
-    public JsonMapper jsonMapper() {
-        return JsonMapper.builder()
-                .findAndAddModules()
-                .build();
     }
 
     @EventListener(ApplicationReadyEvent.class)

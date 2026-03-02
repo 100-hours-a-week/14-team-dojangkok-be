@@ -1,6 +1,7 @@
 package com.dojangkok.backend.sse;
 
 import com.dojangkok.backend.mq.dto.AiResponseDto;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisCallback;
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -26,6 +28,10 @@ public class SsePollingScheduler {
     private final ObjectMapper objectMapper;
 
     private static final String REDIS_KEY_PREFIX = "sse:events:";
+    private static final long HEARTBEAT_INTERVAL_MS = 30_000; // 30초
+
+    // 각 멤버별 마지막 이벤트 전송 시각 기록
+    private final ConcurrentHashMap<Long, Long> lastSentTime = new ConcurrentHashMap<>();
 
     @Scheduled(fixedDelay = 500)
     public void poll() {
@@ -59,6 +65,43 @@ public class SsePollingScheduler {
         }
     }
 
+    /**
+     * 10초마다 실행 - 마지막 이벤트 전송 후 30초 이상 지난 연결에 heartbeat 전송
+     * ALB/Nginx가 유휴 연결을 끊지 않도록 함
+     */
+    @Scheduled(fixedDelay = 10_000)
+    public void heartbeat() {
+        if (emitterStore.isEmpty()) return;
+
+        long now = System.currentTimeMillis();
+        Set<Long> memberIds = emitterStore.getAllMemberIds();
+
+        for (Long memberId : memberIds) {
+            Long lastSent = lastSentTime.get(memberId);
+            if (lastSent != null && (now - lastSent) < HEARTBEAT_INTERVAL_MS) {
+                continue; // 최근에 이벤트를 보냈으면 스킵
+            }
+
+            SseEmitter emitter = emitterStore.get(memberId);
+            if (emitter == null) {
+                lastSentTime.remove(memberId);
+                continue;
+            }
+
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("heartbeat")
+                        .data(""));
+                lastSentTime.put(memberId, now);
+                log.debug("SSE heartbeat: memberId={}", memberId);
+            } catch (IOException e) {
+                emitterStore.remove(memberId);
+                lastSentTime.remove(memberId);
+                log.debug("SSE heartbeat failed, removing: memberId={}", memberId);
+            }
+        }
+    }
+
     private void drainRemaining(Long memberId, SseEmitter emitter) {
         String key = REDIS_KEY_PREFIX + memberId;
         String value;
@@ -78,11 +121,13 @@ public class SsePollingScheduler {
                     .name(eventName)
                     .data(value));  // 원본 JSON 그대로 전달
 
+            lastSentTime.put(memberId, System.currentTimeMillis());
             log.info("SSE push: memberId={}, type={}, correlationId={}",
                     memberId, response.getType(), response.getCorrelationId());
             return true;
         } catch (IOException e) {
             emitterStore.remove(memberId);
+            lastSentTime.remove(memberId);
             log.error("SSE push failed: memberId={}", memberId, e);
             return false;
         }

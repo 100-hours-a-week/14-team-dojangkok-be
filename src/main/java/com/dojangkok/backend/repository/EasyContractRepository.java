@@ -19,11 +19,14 @@ public interface EasyContractRepository extends JpaRepository<EasyContract, Long
 
     void deleteAllByMemberId(Long memberId);
 
-    @Query("SELECT ec FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL ORDER BY ec.createdAt DESC, ec.id DESC")
+    @Query("SELECT ec FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.status = com.dojangkok.backend.domain.enums.EasyContractStatus.COMPLETED ORDER BY ec.createdAt DESC, ec.id DESC")
     List<EasyContract> findAllByMemberIdAndNotDeleted(@Param("memberId") Long memberId, Pageable pageable);
 
-    @Query("SELECT ec FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.id < :cursorId ORDER BY ec.createdAt DESC, ec.id DESC")
+    @Query("SELECT ec FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.status = com.dojangkok.backend.domain.enums.EasyContractStatus.COMPLETED AND ec.id < :cursorId ORDER BY ec.createdAt DESC, ec.id DESC")
     List<EasyContract> findAllByMemberIdAndNotDeletedWithCursor(@Param("memberId") Long memberId, @Param("cursorId") Long cursorId, Pageable pageable);
+
+    @Query("SELECT COUNT(ec) FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.status = com.dojangkok.backend.domain.enums.EasyContractStatus.COMPLETED")
+    long countAllCompletedByMemberId(@Param("memberId") Long memberId);
 
     @Query("SELECT ec FROM EasyContract ec WHERE ec.id = :id AND ec.deletedAt IS NULL")
     Optional<EasyContract> findByIdAndNotDeleted(@Param("id") Long id);

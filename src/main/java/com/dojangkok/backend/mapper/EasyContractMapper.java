@@ -30,9 +30,10 @@ public class EasyContractMapper {
     }
 
     public EasyContractListResponseDto toEasyContractListResponseDto(List<EasyContractListItemDto> items,
-                                                                      int limit, boolean hasNext, String nextCursor) {
+                                                                      long totalCount, int limit, boolean hasNext, String nextCursor) {
         return EasyContractListResponseDto.builder()
                 .easyContractListItemList(items)
+                .totalCount(totalCount)
                 .limit(limit)
                 .hasNext(hasNext)
                 .nextCursor(nextCursor)

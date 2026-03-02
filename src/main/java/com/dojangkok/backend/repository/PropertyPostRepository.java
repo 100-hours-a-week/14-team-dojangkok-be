@@ -70,47 +70,53 @@ public interface PropertyPostRepository extends JpaRepository<PropertyPost, Long
             "ORDER BY pp.createdAt DESC, pp.id DESC")
     List<PropertyPost> findAllHiddenByMemberIdWithCursor(@Param("memberId") Long memberId, @Param("cursorId") Long cursorId, Pageable pageable);
 
-    // 거래 완료 목록 (is_hidden=false, deal_status=COMPLETED, 삭제되지 않은 것)
+    // 거래 완료 목록 (작성자 본인, is_hidden=false, deal_status=COMPLETED, 삭제되지 않은 것)
     @Query("SELECT pp FROM PropertyPost pp " +
-            "WHERE pp.deletedAt IS NULL " +
+            "WHERE pp.member.id = :memberId " +
+            "AND pp.deletedAt IS NULL " +
             "AND pp.isHidden = false " +
             "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.COMPLETED " +
             "ORDER BY pp.createdAt DESC, pp.id DESC")
-    List<PropertyPost> findAllCompleted(Pageable pageable);
+    List<PropertyPost> findAllCompletedByMemberId(@Param("memberId") Long memberId, Pageable pageable);
 
     @Query("SELECT COUNT(pp) FROM PropertyPost pp " +
-            "WHERE pp.deletedAt IS NULL " +
+            "WHERE pp.member.id = :memberId " +
+            "AND pp.deletedAt IS NULL " +
             "AND pp.isHidden = false " +
             "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.COMPLETED")
-    long countAllCompleted();
+    long countAllCompletedByMemberId(@Param("memberId") Long memberId);
 
     @Query("SELECT pp FROM PropertyPost pp " +
-            "WHERE pp.deletedAt IS NULL " +
+            "WHERE pp.member.id = :memberId " +
+            "AND pp.deletedAt IS NULL " +
             "AND pp.isHidden = false " +
             "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.COMPLETED " +
             "AND pp.id < :cursorId " +
             "ORDER BY pp.createdAt DESC, pp.id DESC")
-    List<PropertyPost> findAllCompletedWithCursor(@Param("cursorId") Long cursorId, Pageable pageable);
+    List<PropertyPost> findAllCompletedByMemberIdWithCursor(@Param("memberId") Long memberId, @Param("cursorId") Long cursorId, Pageable pageable);
 
-    // 거래 중 목록 (is_hidden=false, deal_status=TRADING, 삭제되지 않은 것)
+    // 거래 중 목록 (작성자 본인, is_hidden=false, deal_status=TRADING, 삭제되지 않은 것)
     @Query("SELECT pp FROM PropertyPost pp " +
-            "WHERE pp.deletedAt IS NULL " +
+            "WHERE pp.member.id = :memberId " +
+            "AND pp.deletedAt IS NULL " +
             "AND pp.isHidden = false " +
             "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.TRADING " +
             "ORDER BY pp.createdAt DESC, pp.id DESC")
-    List<PropertyPost> findAllTrading(Pageable pageable);
+    List<PropertyPost> findAllTradingByMemberId(@Param("memberId") Long memberId, Pageable pageable);
 
     @Query("SELECT COUNT(pp) FROM PropertyPost pp " +
-            "WHERE pp.deletedAt IS NULL " +
+            "WHERE pp.member.id = :memberId " +
+            "AND pp.deletedAt IS NULL " +
             "AND pp.isHidden = false " +
             "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.TRADING")
-    long countAllTrading();
+    long countAllTradingByMemberId(@Param("memberId") Long memberId);
 
     @Query("SELECT pp FROM PropertyPost pp " +
-            "WHERE pp.deletedAt IS NULL " +
+            "WHERE pp.member.id = :memberId " +
+            "AND pp.deletedAt IS NULL " +
             "AND pp.isHidden = false " +
             "AND pp.dealStatus = com.dojangkok.backend.domain.enums.DealStatus.TRADING " +
             "AND pp.id < :cursorId " +
             "ORDER BY pp.createdAt DESC, pp.id DESC")
-    List<PropertyPost> findAllTradingWithCursor(@Param("cursorId") Long cursorId, Pageable pageable);
+    List<PropertyPost> findAllTradingByMemberIdWithCursor(@Param("memberId") Long memberId, @Param("cursorId") Long cursorId, Pageable pageable);
 }
