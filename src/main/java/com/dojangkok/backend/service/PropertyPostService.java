@@ -147,13 +147,13 @@ public class PropertyPostService {
         List<PropertyPost> posts;
 
         if (cursor == null || cursor.isEmpty()) {
-            posts = propertyPostRepository.findAllCompleted(pageable);
+            posts = propertyPostRepository.findAllCompletedByMemberId(memberId, pageable);
         } else {
             Long cursorId = CursorPaginationUtil.decodeCursor(cursor);
-            posts = propertyPostRepository.findAllCompletedWithCursor(cursorId, pageable);
+            posts = propertyPostRepository.findAllCompletedByMemberIdWithCursor(memberId, cursorId, pageable);
         }
 
-        long totalCount = propertyPostRepository.countAllCompleted();
+        long totalCount = propertyPostRepository.countAllCompletedByMemberId(memberId);
         return buildListResponse(memberId, posts, totalCount);
     }
 
@@ -163,13 +163,13 @@ public class PropertyPostService {
         List<PropertyPost> posts;
 
         if (cursor == null || cursor.isEmpty()) {
-            posts = propertyPostRepository.findAllTrading(pageable);
+            posts = propertyPostRepository.findAllTradingByMemberId(memberId, pageable);
         } else {
             Long cursorId = CursorPaginationUtil.decodeCursor(cursor);
-            posts = propertyPostRepository.findAllTradingWithCursor(cursorId, pageable);
+            posts = propertyPostRepository.findAllTradingByMemberIdWithCursor(memberId, cursorId, pageable);
         }
 
-        long totalCount = propertyPostRepository.countAllTrading();
+        long totalCount = propertyPostRepository.countAllTradingByMemberId(memberId);
         return buildListResponse(memberId, posts, totalCount);
     }
 
