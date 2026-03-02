@@ -1,5 +1,7 @@
 package com.dojangkok.backend.auth.oauth.handler;
 
+import com.dojangkok.backend.auth.oauth.cookie.CookieOAuth2AuthorizationRequestRepository;
+import com.dojangkok.backend.auth.oauth.cookie.CookieUtils;
 import com.dojangkok.backend.auth.token.RedisExchangeCodeStore;
 import com.dojangkok.backend.auth.token.RedisExchangeCodeStore.ExchangeData;
 import jakarta.servlet.http.HttpServletRequest;
@@ -56,6 +58,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                 .toUriString();
 
         log.info("리다이렉트 URL: {}", redirectUrl);
+
+        // 로그인 완료 후 OAuth2 인가 요청 쿠키 정리
+        CookieUtils.deleteCookie(request, response,
+                CookieOAuth2AuthorizationRequestRepository.OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
 
         response.sendRedirect(redirectUrl);
     }

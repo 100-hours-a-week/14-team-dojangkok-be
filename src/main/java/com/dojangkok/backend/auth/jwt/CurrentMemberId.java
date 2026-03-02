@@ -9,12 +9,6 @@ import java.lang.annotation.Target;
 
 /**
  * 현재 인증된 사용자의 memberId를 주입받는 어노테이션
- * 
- * 사용 예시:
- * @GetMapping("/me")
- * public ResponseEntity<?> getMe(@CurrentMemberId Long memberId) {
- *     ...
- * }
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

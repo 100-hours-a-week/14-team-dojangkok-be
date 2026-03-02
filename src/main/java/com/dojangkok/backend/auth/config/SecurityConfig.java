@@ -1,6 +1,7 @@
 package com.dojangkok.backend.auth.config;
 
 import com.dojangkok.backend.auth.jwt.JwtAuthenticationFilter;
+import com.dojangkok.backend.auth.oauth.cookie.CookieOAuth2AuthorizationRequestRepository;
 import com.dojangkok.backend.auth.oauth.handler.OAuth2LoginSuccessHandler;
 import com.dojangkok.backend.auth.oauth.service.CustomOAuth2UserService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,6 +31,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ObjectMapper objectMapper;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final CookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
 
     @Bean
@@ -56,6 +58,9 @@ public class SecurityConfig {
                 )
 
                 .oauth2Login(oauth -> oauth
+                        .authorizationEndpoint(auth -> auth
+                                .authorizationRequestRepository(cookieAuthorizationRequestRepository)
+                        )
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2LoginSuccessHandler)
                 )
