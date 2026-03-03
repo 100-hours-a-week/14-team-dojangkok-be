@@ -3,6 +3,7 @@ package com.dojangkok.backend.repository;
 import com.dojangkok.backend.common.util.CursorPaginationUtil;
 import com.dojangkok.backend.domain.PropertyPost;
 import com.dojangkok.backend.domain.QPropertyPost;
+import com.dojangkok.backend.domain.enums.RentType;
 import com.dojangkok.backend.domain.enums.DealStatus;
 import com.dojangkok.backend.domain.enums.PostStatus;
 import com.dojangkok.backend.domain.enums.PropertyPostSort;
@@ -83,12 +84,42 @@ public class PropertyPostSearchRepositoryImpl implements PropertyPostSearchRepos
             builder.and(pp.rentType.in(request.getRentType()));
         }
 
-        // 보증금/매매가 범위
-        if (request.getPriceMainMin() != null) {
-            builder.and(pp.priceMain.goe(request.getPriceMainMin()));
-        }
-        if (request.getPriceMainMax() != null) {
-            builder.and(pp.priceMain.loe(request.getPriceMainMax()));
+        // 보증금 범위 (전세/반전세/월세)
+        if (request.getDepositMin() != null || request.getDepositMax() != null) {
+            BooleanBuilder depositCondition = new BooleanBuilder();
+
+            depositCondition.and(pp.rentType.in(RentType.JEONSE, RentType.JEONSE_MONTHLY, RentType.MONTHLY));
+            if (request.getDepositMin() != null) {
+                depositCondition.and(pp.priceMain.goe(request.getDepositMin()));
+            }
+            if (request.getDepositMax() != null) {
+                depositCondition.and(pp.priceMain.loe(request.getDepositMax()));
+            }
+
+            // 매매가 범위 (매매)
+            if (request.getSalePriceMin() != null || request.getSalePriceMax() != null) {
+                // 보증금 + 매매가 둘 다 설정된 경우: OR 조건
+                BooleanBuilder salePriceCondition = new BooleanBuilder();
+                salePriceCondition.and(pp.rentType.eq(RentType.SALE));
+                if (request.getSalePriceMin() != null) {
+                    salePriceCondition.and(pp.priceMain.goe(request.getSalePriceMin()));
+                }
+                if (request.getSalePriceMax() != null) {
+                    salePriceCondition.and(pp.priceMain.loe(request.getSalePriceMax()));
+                }
+                builder.and(depositCondition.or(salePriceCondition));
+            } else {
+                builder.and(depositCondition);
+            }
+        } else if (request.getSalePriceMin() != null || request.getSalePriceMax() != null) {
+            // 매매가만 설정된 경우
+            builder.and(pp.rentType.eq(RentType.SALE));
+            if (request.getSalePriceMin() != null) {
+                builder.and(pp.priceMain.goe(request.getSalePriceMin()));
+            }
+            if (request.getSalePriceMax() != null) {
+                builder.and(pp.priceMain.loe(request.getSalePriceMax()));
+            }
         }
 
         // 월세 범위

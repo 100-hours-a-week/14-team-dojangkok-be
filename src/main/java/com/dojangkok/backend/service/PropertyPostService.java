@@ -559,9 +559,14 @@ public class PropertyPostService {
     }
 
     private void validateSearchRequest(PropertyPostSearchRequestDto dto) {
-        // 보증금/매매가 범위 검증
-        if (dto.getPriceMainMin() != null && dto.getPriceMainMax() != null
-                && dto.getPriceMainMin() > dto.getPriceMainMax()) {
+        // 보증금 범위 검증
+        if (dto.getDepositMin() != null && dto.getDepositMax() != null
+                && dto.getDepositMin() > dto.getDepositMax()) {
+            throw new GeneralException(Code.PRICE_RANGE_INVALID);
+        }
+        // 매매가 범위 검증
+        if (dto.getSalePriceMin() != null && dto.getSalePriceMax() != null
+                && dto.getSalePriceMin() > dto.getSalePriceMax()) {
             throw new GeneralException(Code.PRICE_RANGE_INVALID);
         }
         // 월세 범위 검증

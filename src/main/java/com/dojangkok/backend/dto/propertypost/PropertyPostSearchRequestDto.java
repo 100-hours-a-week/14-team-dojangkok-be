@@ -21,11 +21,17 @@ public class PropertyPostSearchRequestDto {
     @JsonProperty("rent_type")
     private List<RentType> rentType;
 
-    @JsonProperty("price_main_min")
-    private Long priceMainMin;
+    @JsonProperty("deposit_min")
+    private Long depositMin;
 
-    @JsonProperty("price_main_max")
-    private Long priceMainMax;
+    @JsonProperty("deposit_max")
+    private Long depositMax;
+
+    @JsonProperty("sale_price_min")
+    private Long salePriceMin;
+
+    @JsonProperty("sale_price_max")
+    private Long salePriceMax;
 
     @JsonProperty("price_monthly_min")
     private Integer priceMonthlyMin;
