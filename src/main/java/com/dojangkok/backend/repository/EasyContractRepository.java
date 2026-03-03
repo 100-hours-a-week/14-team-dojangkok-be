@@ -19,13 +19,13 @@ public interface EasyContractRepository extends JpaRepository<EasyContract, Long
 
     void deleteAllByMemberId(Long memberId);
 
-    @Query("SELECT ec FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.status = com.dojangkok.backend.domain.enums.EasyContractStatus.COMPLETED ORDER BY ec.createdAt DESC, ec.id DESC")
+    @Query("SELECT ec FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.status IN (com.dojangkok.backend.domain.enums.EasyContractStatus.COMPLETED, com.dojangkok.backend.domain.enums.EasyContractStatus.PROCESSING) ORDER BY ec.createdAt DESC, ec.id DESC")
     List<EasyContract> findAllByMemberIdAndNotDeleted(@Param("memberId") Long memberId, Pageable pageable);
 
-    @Query("SELECT ec FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.status = com.dojangkok.backend.domain.enums.EasyContractStatus.COMPLETED AND ec.id < :cursorId ORDER BY ec.createdAt DESC, ec.id DESC")
+    @Query("SELECT ec FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.status IN (com.dojangkok.backend.domain.enums.EasyContractStatus.COMPLETED, com.dojangkok.backend.domain.enums.EasyContractStatus.PROCESSING) AND ec.id < :cursorId ORDER BY ec.createdAt DESC, ec.id DESC")
     List<EasyContract> findAllByMemberIdAndNotDeletedWithCursor(@Param("memberId") Long memberId, @Param("cursorId") Long cursorId, Pageable pageable);
 
-    @Query("SELECT COUNT(ec) FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.status = com.dojangkok.backend.domain.enums.EasyContractStatus.COMPLETED")
+    @Query("SELECT COUNT(ec) FROM EasyContract ec WHERE ec.member.id = :memberId AND ec.deletedAt IS NULL AND ec.status IN (com.dojangkok.backend.domain.enums.EasyContractStatus.COMPLETED, com.dojangkok.backend.domain.enums.EasyContractStatus.PROCESSING)")
     long countAllCompletedByMemberId(@Param("memberId") Long memberId);
 
     @Query("SELECT ec FROM EasyContract ec WHERE ec.id = :id AND ec.deletedAt IS NULL")
