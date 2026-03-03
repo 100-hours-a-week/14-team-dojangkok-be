@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ${ECR_REGISTRY}/dev-dojangkok-be:latest
+    image: ${ECR_REGISTRY}/fis-be:latest
     container_name: dojangkok-be
     ports:
       - '8080:8080'

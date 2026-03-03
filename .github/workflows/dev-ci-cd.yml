@@ -9,12 +9,12 @@ permissions:
 # 워크플로우를 실행할 이벤트 결정 및 매핑
 on:
   push:
-    branches: [dev]
+    branches: [fis]
     paths-ignore:
       - '**.md'
       - 'docs/**'
   pull_request:
-    branches: [dev]
+    branches: [fis]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -54,7 +54,7 @@ jobs:
   
   build-and-push-image: # 빌드 파일을 가지고 Container Image를 구성하는 단계
     needs: test-and-build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/fis'
     runs-on: ubuntu-latest
     steps:
       # 1. 소스코드 체크아웃
@@ -100,15 +100,15 @@ jobs:
           # 6-1. 배포 자동화에 사용하는 버전 (신규 push에 덮어써짐)
           # 6-2. 이력을 관리하기 위한 목적 (롤백용)
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/dev-dojangkok-be:latest
-            ${{ steps.login-ecr.outputs.registry }}/dev-dojangkok-be:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/fis-be:latest
+            ${{ steps.login-ecr.outputs.registry }}/fis-be:${{ github.sha }}
           # 빌드 성능 향상을 위한 캐시 설정
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy: # Container Image를 가지고 배포를 수행하는 단계
     needs: build-and-push-image
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/fis'
     runs-on: ubuntu-latest
     steps:
       # 1. 소스코드를 체크아웃
@@ -123,7 +123,7 @@ jobs:
       # 3. S3에서 application.yaml 파일 다운로드 및 인프라 파일 준비
       - name: Prepare Files for CodeDeploy
         run: |
-          aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/backend/v2/dev/application-dev.yaml ./application.yaml
+          aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/backend/fis/application.yaml ./application.yaml
           cp -r infra/dev/* .
           chmod +x deploy.sh
       # 4. Code Deploy에 전달할 artifact 구성
@@ -131,15 +131,15 @@ jobs:
         run: zip -r deploy.zip docker-compose.yml appspec.yml deploy.sh application.yaml
       # 5. 구성한 artifact S3에 업로드
       - name: Upload Artifact to S3
-        run: aws s3 cp deploy.zip s3://${{ secrets.S3_BUCKET_NAME }}/backend/v2/dev/deploy.zip
+        run: aws s3 cp deploy.zip s3://${{ secrets.S3_BUCKET_NAME }}/backend/fis/deploy.zip
       # 6. CodeDeploy 배포 명령 전달
       - name: Trigger CodeDeploy
         run: |
           DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name dev-dojangkok-v2-be \
-            --deployment-group-name dev-dojangkok-v2-be-dg \
+            --application-name fis-be \
+            --deployment-group-name fis-be-dg \
             --deployment-config-name CodeDeployDefault.AllAtOnce \
-            --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},key=backend/v2/dev/deploy.zip,bundleType=zip \
+            --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},key=backend/fis/deploy.zip,bundleType=zip \
             --query "deploymentId" \
             --output text)
 
