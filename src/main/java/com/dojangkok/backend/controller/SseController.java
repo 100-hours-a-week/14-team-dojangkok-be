@@ -30,17 +30,16 @@ public class SseController {
 
         emitterStore.save(memberId, emitter);
 
-        emitter.onCompletion(() -> emitterStore.remove(memberId));
-        emitter.onTimeout(() -> emitterStore.remove(memberId));
-        emitter.onError(e -> emitterStore.remove(memberId));
+        emitter.onCompletion(() -> emitterStore.removeIfMatch(memberId, emitter));
+        emitter.onTimeout(() -> emitterStore.removeIfMatch(memberId, emitter));
+        emitter.onError(e -> emitterStore.removeIfMatch(memberId, emitter));
 
         try {
             emitter.send(SseEmitter.event()
                     .name("connect")
                     .data("connected!"));
         } catch (IOException e) {
-            // 데이터 보내려다 실패하면(짧은 새에 유저가 창을 닫음 등) 잔여 데이터가 남지 않게 저장소에서 즉시 삭제
-            emitterStore.remove(memberId);
+            emitterStore.removeIfMatch(memberId, emitter);
         }
 
         return emitter;
