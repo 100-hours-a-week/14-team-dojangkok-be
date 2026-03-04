@@ -14,9 +14,8 @@ public class EasyContractCreateResponseDto {
     @JsonProperty("easy_contract_id")
     private Long easyContractId;
 
-    private String title;
-
-    private String content;
+    @JsonProperty("correlation_id")
+    private String correlationId;
 
     private EasyContractStatus status;
 

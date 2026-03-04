@@ -96,7 +96,7 @@ public class HomeNoteFileUploadService {
             }
 
             // 3. 검증 통과 - presigned URL 생성
-            PresignedUrlItemResponseDto responseItem = fileAssetService.generatePresignedUrlForItem(item);
+            PresignedUrlItemResponseDto responseItem = fileAssetService.generatePresignedUrlForItem(item, "homenote");
             successItems.add(responseItem);
         }
 

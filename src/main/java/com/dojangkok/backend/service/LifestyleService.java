@@ -35,7 +35,7 @@ public class LifestyleService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public LifestyleResponseDto createLifestyle(Long memberId, LifestyleRequestDto createLifestyleRequestDto) {
+    public LifestyleResponseDto createLifestyle(Long memberId, LifestyleRequestDto lifestyleRequestDto) {
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new GeneralException(Code.MEMBER_NOT_FOUND));
@@ -48,21 +48,23 @@ public class LifestyleService {
             member.updateOnboardingStatus(OnboardingStatus.COMPLETE);
         }
 
-        List<String> lifestyleItems =  createLifestyleRequestDto.getLifestyleItems();
         int nextVersionNo = getNextVersionNo(lifestyle.getId());
-
         LifestyleVersion lifestyleVersion = LifestyleVersion.createLifestyleVersion(lifestyle, nextVersionNo);
         lifestyleVersionRepository.save(lifestyleVersion);
 
-        List<LifestyleItem> lifestyleItemsList = createLifestyleItems(lifestyleItems, lifestyleVersion);
-        lifestyleItemRepository.saveAll(lifestyleItemsList);
-
+        List<String> lifestyleItems = Optional.ofNullable(lifestyleRequestDto.getLifestyleItems())
+                .orElse(List.of());
+        List<LifestyleItem> lifestyleItemList = List.of();
+        if (!lifestyleItems.isEmpty()) {
+            lifestyleItemList = createLifestyleItems(lifestyleItems, lifestyleVersion);
+            lifestyleItemRepository.saveAll(lifestyleItemList);
+        }
         lifestyle.updateCurrentVersion(lifestyleVersion);
 
         // 이벤트 발행 - 트랜잭션 커밋 후 비동기로 체크리스트 생성
-        eventPublisher.publishEvent(new LifestyleCreatedEvent(lifestyleVersion.getId(), lifestyleItems));
+        eventPublisher.publishEvent(new LifestyleCreatedEvent(memberId, lifestyleVersion.getId(), lifestyleItems));
 
-        return lifestyleMapper.toLifestyleResponseDto(member, lifestyleItemsList);
+        return lifestyleMapper.toLifestyleResponseDto(member, lifestyleItemList);
     }
 
     @Transactional(readOnly = true)
@@ -94,8 +96,8 @@ public class LifestyleService {
                 .orElse(1);
     }
 
-    private List<LifestyleItem> createLifestyleItems(List<String> contents, LifestyleVersion lifestyleVersion) {
-        return contents.stream()
+    private List<LifestyleItem> createLifestyleItems(List<String> lifestyleItems, LifestyleVersion lifestyleVersion) {
+        return lifestyleItems.stream()
                 .map(content -> LifestyleItem.createLifestyleItem(content, lifestyleVersion))
                 .toList();
     }

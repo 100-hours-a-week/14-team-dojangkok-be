@@ -53,12 +53,12 @@ public class EasyContract extends BaseTimeEntity {
         this.deletedAt = deletedAt;
     }
 
-    public static EasyContract createEasyContract(Member member, String title, String content) {
+    public static EasyContract createEasyContract(Member member) {
         return EasyContract.builder()
                 .member(member)
-                .title(title)
-                .content(content)
-                .status(EasyContractStatus.COMPLETED)
+                .title(null)
+                .content(null)
+                .status(EasyContractStatus.PROCESSING)
                 .deletedAt(null)
                 .build();
     }
@@ -83,6 +83,14 @@ public class EasyContract extends BaseTimeEntity {
 
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
+    }
+
+    public void markCancelled() {
+        this.status = EasyContractStatus.CANCELLED;
+    }
+
+    public boolean isCancelled() {
+        return this.status == EasyContractStatus.CANCELLED;
     }
 
     public boolean canRetry() {

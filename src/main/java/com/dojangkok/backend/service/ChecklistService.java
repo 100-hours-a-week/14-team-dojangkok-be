@@ -52,7 +52,7 @@ public class ChecklistService {
      * @return 생성된 체크리스트 응답 DTO
      */
     @Transactional
-    public ChecklistResponseDto initializeChecklist(Member member, HomeNote homeNote) {
+    public ChecklistResponseDto createChecklist(Member member, HomeNote homeNote) {
         ChecklistTemplate template = getCurrentChecklistTemplate(member.getId());
         Checklist checklist = Checklist.createChecklist(member, homeNote, template);
         checklistRepository.save(checklist);

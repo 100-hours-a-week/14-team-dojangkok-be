@@ -5,7 +5,8 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum ChecklistStatus {
-
-    PROCESSING, COMPLETED, FAILED
+public enum PropertyPostSort {
+    LATEST,
+    PRICE_ASC,
+    PRICE_DESC
 }

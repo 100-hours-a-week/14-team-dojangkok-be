@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -21,7 +21,7 @@ import java.util.Optional;
 public class RedisExchangeCodeStore {
 
     private final StringRedisTemplate redisTemplate;
-    private final JsonMapper jsonMapper;
+    private final ObjectMapper objectMapper;
     
     private static final String EXCHANGE_CODE_PREFIX = "exchange_code:";
     private static final Duration TTL = Duration.ofSeconds(30);
@@ -29,10 +29,10 @@ public class RedisExchangeCodeStore {
     public void save(String code, ExchangeData data) {
         String key = EXCHANGE_CODE_PREFIX + code;
         try {
-            String json = jsonMapper.writeValueAsString(data);
+            String json = objectMapper.writeValueAsString(data);
             redisTemplate.opsForValue().set(key, json, TTL);
             log.info("Redis에 교환 코드 저장 완료 - key: {}, ttl: {}초", key, TTL.getSeconds());
-        } catch (JacksonException e) {
+        } catch (JsonProcessingException e) {
             log.error("Failed to serialize exchange data", e);
             throw new IllegalStateException("Failed to save exchange code", e);
         }
@@ -47,9 +47,9 @@ public class RedisExchangeCodeStore {
         }
         
         try {
-            ExchangeData data = jsonMapper.readValue(json, ExchangeData.class);
+            ExchangeData data = objectMapper.readValue(json, ExchangeData.class);
             return Optional.of(data);
-        } catch (JacksonException e) {
+        } catch (JsonProcessingException e) {
             log.error("Failed to deserialize exchange data", e);
             return Optional.empty();
         }

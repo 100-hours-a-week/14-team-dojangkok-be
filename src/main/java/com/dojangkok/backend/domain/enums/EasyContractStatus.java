@@ -8,5 +8,6 @@ import lombok.RequiredArgsConstructor;
 public enum EasyContractStatus {
     PROCESSING,
     COMPLETED,
+    CANCELLED,
     FAILED
 }

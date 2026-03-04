@@ -1,26 +1,23 @@
 package com.dojangkok.backend.service;
 
-import com.dojangkok.backend.client.AiServiceClient;
 import com.dojangkok.backend.common.enums.Code;
 import com.dojangkok.backend.common.exception.GeneralException;
+import com.dojangkok.backend.common.util.CorrelationIdGenerator;
 import com.dojangkok.backend.domain.ChecklistTemplate;
 import com.dojangkok.backend.domain.ChecklistTemplateItem;
 import com.dojangkok.backend.domain.LifestyleVersion;
-import com.dojangkok.backend.domain.enums.ChecklistStatus;
+import com.dojangkok.backend.domain.enums.ChecklistTemplateStatus;
 import com.dojangkok.backend.dto.checklist.ChecklistGenerateRequestDto;
-import com.dojangkok.backend.event.LifestyleCreatedEvent;
 import com.dojangkok.backend.mapper.ChecklistTemplateMapper;
+import com.dojangkok.backend.mq.ChecklistMqProducer;
+import com.dojangkok.backend.mq.dto.ChecklistMqRequestDto;
 import com.dojangkok.backend.repository.ChecklistTemplateItemRepository;
 import com.dojangkok.backend.repository.ChecklistTemplateRepository;
 import com.dojangkok.backend.repository.LifestyleVersionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
 
@@ -32,41 +29,63 @@ public class ChecklistTemplateService {
     private final ChecklistTemplateRepository checklistTemplateRepository;
     private final ChecklistTemplateItemRepository checklistTemplateItemRepository;
     private final LifestyleVersionRepository lifestyleVersionRepository;
-    private final AiServiceClient aiServiceClient;
     private final ChecklistTemplateMapper checklistTemplateMapper;
+    private final ChecklistMqProducer checklistMqProducer;
 
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleLifestyleCreatedEvent(LifestyleCreatedEvent event) {
-        log.info("Received LifestyleCreatedEvent for lifestyleVersionId: {}", event.lifestyleVersionId());
-        generateChecklistTemplate(event.lifestyleVersionId(), event.lifestyleItems());
+    @Transactional
+    public void requestChecklistGeneration(Long memberId, Long lifestyleVersionId, List<String> lifestyleItems) {
+        LifestyleVersion lifestyleVersion = lifestyleVersionRepository.findById(lifestyleVersionId)
+                .orElseThrow(() -> new GeneralException(Code.LIFESTYLE_VERSION_NOT_FOUND));
+
+        ChecklistTemplate checklistTemplate = ChecklistTemplate.createChecklistTemplate(lifestyleVersion);
+        checklistTemplateRepository.save(checklistTemplate);
+
+        String correlationId = CorrelationIdGenerator.generate();
+        ChecklistGenerateRequestDto generateRequest =
+                checklistTemplateMapper.toChecklistGenerateRequestDto(lifestyleItems);
+
+        ChecklistMqRequestDto request = ChecklistMqRequestDto.builder()
+                .correlationId(correlationId)
+                .templateId(checklistTemplate.getId())
+                .memberId(memberId)
+                .keywords(generateRequest.getKeywords())
+                .build();
+
+        checklistMqProducer.sendRequest(request);
+
+        log.info("Checklist generation requested: templateId={}, correlationId={}",
+                checklistTemplate.getId(), correlationId);
     }
 
     @Transactional
-    public void generateChecklistTemplate(Long lifestyleVersionId, List<String> lifestyleItems) {
-        try {
-            // 1. PROCESSING 상태로 ChecklistTemplate 생성
-            LifestyleVersion lifestyleVersion = lifestyleVersionRepository.findById(lifestyleVersionId)
-                    .orElseThrow(() -> new GeneralException(Code.LIFESTYLE_VERSION_NOT_FOUND));
+    public void completeChecklistGeneration(Long templateId, List<String> checklists) {
+        ChecklistTemplate template = checklistTemplateRepository.findById(templateId)
+                .orElseThrow(() -> new GeneralException(Code.CHECKLIST_TEMPLATE_NOT_FOUND));
 
-            ChecklistTemplate checklistTemplate = createTemplateWithStatus(lifestyleVersion, ChecklistStatus.PROCESSING);
+        // 멱등성 체크: PROCESSING 상태일 때만 처리
+        if (template.getChecklistTemplateStatus() != ChecklistTemplateStatus.PROCESSING) {
+            log.info("Checklist already processed, skipping: templateId={}, status={}",
+                    templateId, template.getChecklistTemplateStatus());
+            return;
+        }
 
-            // 2. FastAPI에 비동기 요청 (결과는 콜백으로 받음)
-            ChecklistGenerateRequestDto request = checklistTemplateMapper.toChecklistGenerateRequestDto(lifestyleItems);
-
-            aiServiceClient.requestChecklistGeneration(request, checklistTemplate.getId());
-
-            log.info("Checklist generation requested for lifestyleVersionId: {}", lifestyleVersionId);
-
-        } catch (Exception e) {
-            log.error("Failed to request checklist generation for lifestyleVersionId: {}", lifestyleVersionId, e);
-            handleGenerationFailure(lifestyleVersionId);
+        if (checklists != null && !checklists.isEmpty()) {
+            saveChecklistTemplateItems(template, checklists);
+            updateTemplateStatus(template, ChecklistTemplateStatus.COMPLETED);
+            log.info("Checklist template generation completed for templateId: {}", templateId);
+        } else {
+            updateTemplateStatus(template, ChecklistTemplateStatus.FAILED);
+            log.warn("Checklist template generation failed - empty checklists for templateId: {}", templateId);
         }
     }
 
-    private ChecklistTemplate createTemplateWithStatus(LifestyleVersion lifestyleVersion, ChecklistStatus checklistStatus) {
-        ChecklistTemplate checklistTemplate = ChecklistTemplate.createChecklistTemplate(lifestyleVersion, checklistStatus);
-        return checklistTemplateRepository.save(checklistTemplate);
+    @Transactional
+    public void handleGenerationFailure(Long lifestyleVersionId) {
+        checklistTemplateRepository.findByLifestyleVersionId(lifestyleVersionId)
+                .ifPresent(template -> {
+                    template.updateStatus(ChecklistTemplateStatus.FAILED);
+                    checklistTemplateRepository.save(template);
+                });
     }
 
     private void saveChecklistTemplateItems(ChecklistTemplate checklistTemplate, List<String> checklistItems) {
@@ -76,32 +95,8 @@ public class ChecklistTemplateService {
         checklistTemplateItemRepository.saveAll(items);
     }
 
-    private void updateTemplateStatus(ChecklistTemplate checklistTemplate, ChecklistStatus checklistStatus) {
-        checklistTemplate.updateStatus(checklistStatus);
+    private void updateTemplateStatus(ChecklistTemplate checklistTemplate, ChecklistTemplateStatus checklistTemplateStatus) {
+        checklistTemplate.updateStatus(checklistTemplateStatus);
         checklistTemplateRepository.save(checklistTemplate);
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handleGenerationFailure(Long lifestyleVersionId) {
-        checklistTemplateRepository.findByLifestyleVersionId(lifestyleVersionId)
-                .ifPresent(template -> {
-                    template.updateStatus(ChecklistStatus.FAILED);
-                    checklistTemplateRepository.save(template);
-                });
-    }
-
-    @Transactional
-    public void completeChecklistGeneration(Long templateId, List<String> checklists) {
-        ChecklistTemplate template = checklistTemplateRepository.findById(templateId)
-                .orElseThrow(() -> new GeneralException(Code.CHECKLIST_TEMPLATE_NOT_FOUND));
-
-        if (checklists != null && !checklists.isEmpty()) {
-            saveChecklistTemplateItems(template, checklists);
-            updateTemplateStatus(template, ChecklistStatus.COMPLETED);
-            log.info("Checklist template generation completed for templateId: {}", templateId);
-        } else {
-            updateTemplateStatus(template, ChecklistStatus.FAILED);
-            log.warn("Checklist template generation failed - empty checklists for templateId: {}", templateId);
-        }
     }
 }

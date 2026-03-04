@@ -1,7 +1,7 @@
 package com.dojangkok.backend.domain;
 
 import com.dojangkok.backend.common.entity.BaseCreatedTimeEntity;
-import com.dojangkok.backend.domain.enums.ChecklistStatus;
+import com.dojangkok.backend.domain.enums.ChecklistTemplateStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,7 +25,7 @@ public class ChecklistTemplate extends BaseCreatedTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private ChecklistStatus checklistStatus;
+    private ChecklistTemplateStatus checklistTemplateStatus;
 
     // OneToOne 대신 ManyToOne으로 열어두고 unique로 제약
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -33,19 +33,19 @@ public class ChecklistTemplate extends BaseCreatedTimeEntity {
     private LifestyleVersion lifestyleVersion;
 
     @Builder
-    private ChecklistTemplate(LifestyleVersion lifestyleVersion, ChecklistStatus checklistStatus) {
+    private ChecklistTemplate(LifestyleVersion lifestyleVersion, ChecklistTemplateStatus checklistTemplateStatus) {
         this.lifestyleVersion = lifestyleVersion;
-        this.checklistStatus = checklistStatus;
+        this.checklistTemplateStatus = checklistTemplateStatus;
     }
 
-    public static ChecklistTemplate createChecklistTemplate(LifestyleVersion lifestyleVersion, ChecklistStatus checklistStatus) {
+    public static ChecklistTemplate createChecklistTemplate(LifestyleVersion lifestyleVersion) {
         return ChecklistTemplate.builder()
                 .lifestyleVersion(lifestyleVersion)
-                .checklistStatus(checklistStatus)
+                .checklistTemplateStatus(ChecklistTemplateStatus.PROCESSING)
                 .build();
     }
 
-    public void updateStatus(ChecklistStatus status) {
-        this.checklistStatus = status;
+    public void updateStatus(ChecklistTemplateStatus status) {
+        this.checklistTemplateStatus = status;
     }
 }

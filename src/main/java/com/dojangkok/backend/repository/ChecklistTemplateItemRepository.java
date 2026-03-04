@@ -15,10 +15,6 @@ public interface ChecklistTemplateItemRepository extends JpaRepository<Checklist
     List<ChecklistTemplateItem> findAllByChecklistTemplateId(Long checklistTemplateId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM ChecklistTemplateItem cti WHERE cti.checklistTemplate.id = :templateId")
-    void deleteAllByChecklistTemplateId(@Param("templateId") Long templateId);
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ChecklistTemplateItem cti WHERE cti.checklistTemplate.id IN :templateIds")
     void deleteAllByChecklistTemplateIdIn(@Param("templateIds") List<Long> templateIds);
 }
