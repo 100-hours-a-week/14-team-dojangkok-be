@@ -23,6 +23,10 @@ public class SseEmitterStore {
         emitters.remove(memberId);
     }
 
+    public void removeIfMatch(Long memberId, SseEmitter emitter) {
+        emitters.remove(memberId, emitter);
+    }
+
     public Set<Long> getAllMemberIds() {
         return emitters.keySet();
     }
