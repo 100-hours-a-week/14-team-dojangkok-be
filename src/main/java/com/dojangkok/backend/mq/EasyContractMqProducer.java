@@ -17,7 +17,7 @@ public class EasyContractMqProducer {
 
     public void sendRequest(EasyContractMqRequestDto request) {
         rabbitTemplate.convertAndSend(
-                RabbitMQConfig.WAS_EXCHANGE, "easy-contract.request", request);
+                RabbitMQConfig.WAS_EXCHANGE, "quorum.easy-contract.request", request);
 
         log.info("MQ request published: correlationId={}, easyContractId={}",
                 request.getCorrelationId(), request.getEasyContractId());
@@ -25,7 +25,7 @@ public class EasyContractMqProducer {
 
     public void sendCancel(EasyContractCancelRequestDto request) {
         rabbitTemplate.convertAndSend(
-                RabbitMQConfig.WAS_EXCHANGE, "cancel.request", request);
+                RabbitMQConfig.WAS_EXCHANGE, "quorum.cancel.request", request);
 
         log.info("MQ cancel request published: easyContractId={}",
                 request.getEasyContractId());
