@@ -12,15 +12,15 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String EASY_CONTRACT_REQUEST_QUEUE = "easy-contract.request";
-    public static final String CHECKLIST_REQUEST_QUEUE = "checklist.request";
-    public static final String CANCEL_REQUEST_QUEUE = "cancel.request";
-    public static final String AI_RESPONSE_QUEUE = "ai.response";
+    public static final String EASY_CONTRACT_REQUEST_QUEUE = "quorum.easy-contract.request";
+    public static final String CHECKLIST_REQUEST_QUEUE = "quorum.checklist.request";
+    public static final String CANCEL_REQUEST_QUEUE = "quorum.cancel.request";
+    public static final String AI_RESPONSE_QUEUE = "quorum.ai.response";
 
-    public static final String EASY_CONTRACT_REQUEST_DLQ = "easy-contract.request.dlq";
-    public static final String CHECKLIST_REQUEST_DLQ = "checklist.request.dlq";
-    public static final String CANCEL_REQUEST_DLQ = "cancel.request.dlq";
-    public static final String AI_RESPONSE_DLQ = "ai.response.dlq";
+    public static final String EASY_CONTRACT_REQUEST_DLQ = "quorum.easy-contract.request.dlq";
+    public static final String CHECKLIST_REQUEST_DLQ = "quorum.checklist.request.dlq";
+    public static final String CANCEL_REQUEST_DLQ = "quorum.cancel.request.dlq";
+    public static final String AI_RESPONSE_DLQ = "quorum.ai.response.dlq";
 
     public static final String WAS_EXCHANGE = "was.exchange";
     public static final String FAST_EXCHANGE = "fast.exchange";
@@ -30,8 +30,9 @@ public class RabbitMQConfig {
     public Queue easyContractRequestQueue() {
         return QueueBuilder.durable(EASY_CONTRACT_REQUEST_QUEUE)
                 .deadLetterExchange(DLX_EXCHANGE)
-                .deadLetterRoutingKey("easy-contract.request")
+                .deadLetterRoutingKey("quorum.easy-contract.request")
                 .ttl(300000) // 5분
+                .quorum()
                 .build();
     }
 
@@ -39,8 +40,9 @@ public class RabbitMQConfig {
     public Queue checklistRequestQueue(){
         return QueueBuilder.durable(CHECKLIST_REQUEST_QUEUE)
                 .deadLetterExchange(DLX_EXCHANGE)
-                .deadLetterRoutingKey("checklist.request")
+                .deadLetterRoutingKey("quorum.checklist.request")
                 .ttl(300000)
+                .quorum()
                 .build();
     }
 
@@ -48,8 +50,9 @@ public class RabbitMQConfig {
     public Queue cancelRequestQueue(){
         return QueueBuilder.durable(CANCEL_REQUEST_QUEUE)
                 .deadLetterExchange(DLX_EXCHANGE)
-                .deadLetterRoutingKey("cancel.request")
+                .deadLetterRoutingKey("quorum.cancel.request")
                 .ttl(300000)
+                .quorum()
                 .build();
     }
 
@@ -57,29 +60,30 @@ public class RabbitMQConfig {
     public Queue aiResponseQueue() {
         return QueueBuilder.durable(AI_RESPONSE_QUEUE)
                 .deadLetterExchange(DLX_EXCHANGE)
-                .deadLetterRoutingKey("ai.response")
+                .deadLetterRoutingKey("quorum.ai.response")
                 .ttl(300000)
+                .quorum()
                 .build();
     }
 
     @Bean
     public Queue easyContractRequestDlq() {
-        return QueueBuilder.durable(EASY_CONTRACT_REQUEST_DLQ).build();
+        return QueueBuilder.durable(EASY_CONTRACT_REQUEST_DLQ).quorum().build();
     }
 
     @Bean
     public Queue checklistRequestDlq() {
-        return QueueBuilder.durable(CHECKLIST_REQUEST_DLQ).build();
+        return QueueBuilder.durable(CHECKLIST_REQUEST_DLQ).quorum().build();
     }
 
     @Bean
     public Queue cancelRequestDlq() {
-        return QueueBuilder.durable(CANCEL_REQUEST_DLQ).build();
+        return QueueBuilder.durable(CANCEL_REQUEST_DLQ).quorum().build();
     }
 
     @Bean
     public Queue aiResponseDlq() {
-        return QueueBuilder.durable(AI_RESPONSE_DLQ).build();
+        return QueueBuilder.durable(AI_RESPONSE_DLQ).quorum().build();
     }
 
     @Bean
@@ -100,49 +104,49 @@ public class RabbitMQConfig {
     @Bean
     public Binding easyContractRequestBinding(Queue easyContractRequestQueue, DirectExchange wasExchange) {
         return BindingBuilder.bind(easyContractRequestQueue)
-                .to(wasExchange).with("easy-contract.request");
+                .to(wasExchange).with("quorum.easy-contract.request");
     }
 
     @Bean
     public Binding checklistRequestBinding(Queue checklistRequestQueue, DirectExchange wasExchange) {
         return BindingBuilder.bind(checklistRequestQueue)
-                .to(wasExchange).with("checklist.request");
+                .to(wasExchange).with("quorum.checklist.request");
     }
 
     @Bean
     public Binding cancelRequestBinding(Queue cancelRequestQueue, DirectExchange wasExchange) {
         return BindingBuilder.bind(cancelRequestQueue)
-                .to(wasExchange).with("cancel.request");
+                .to(wasExchange).with("quorum.cancel.request");
     }
 
     @Bean
     public Binding aiResponseBinding(Queue aiResponseQueue, DirectExchange fastExchange) {
         return BindingBuilder.bind(aiResponseQueue)
-                .to(fastExchange).with("ai.response");
+                .to(fastExchange).with("quorum.ai.response");
     }
 
     @Bean
     public Binding easyContractRequestDlqBinding(Queue easyContractRequestDlq, DirectExchange dlxExchange) {
         return BindingBuilder.bind(easyContractRequestDlq)
-                .to(dlxExchange).with("easy-contract.request");
+                .to(dlxExchange).with("quorum.easy-contract.request");
     }
 
     @Bean
     public Binding checklistRequestDlqBinding(Queue checklistRequestDlq, DirectExchange dlxExchange) {
         return BindingBuilder.bind(checklistRequestDlq)
-                .to(dlxExchange).with("checklist.request");
+                .to(dlxExchange).with("quorum.checklist.request");
     }
 
     @Bean
     public Binding cancelRequestDlqBinding(Queue cancelRequestDlq, DirectExchange dlxExchange) {
         return BindingBuilder.bind(cancelRequestDlq)
-                .to(dlxExchange).with("cancel.request");
+                .to(dlxExchange).with("quorum.cancel.request");
     }
 
     @Bean
     public Binding aiResponseDlqBinding(Queue aiResponseDlq, DirectExchange dlxExchange) {
         return BindingBuilder.bind(aiResponseDlq)
-                .to(dlxExchange).with("ai.response");
+                .to(dlxExchange).with("quorum.ai.response");
     }
 
     @Bean
