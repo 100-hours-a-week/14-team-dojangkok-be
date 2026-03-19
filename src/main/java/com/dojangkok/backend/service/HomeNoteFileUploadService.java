@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -65,12 +68,10 @@ public class HomeNoteFileUploadService {
         if (existingCount + requestCount > 50) {
             log.warn("Home note file count exceeded: homeNoteId={}, existing={}, request={}, max=50",
                     homeNoteId, existingCount, requestCount);
-
             throw new GeneralException(Code.FILE_COUNT_EXCEEDED);
         }
 
         for (PresignedUrlItemRequestDto item : request.getFileItems()) {
-            // 1. Content-Type 검증
             if (!ALLOWED_CONTENT_TYPES.contains(item.getContentType().toLowerCase())) {
                 failedItems.add(HomeNoteFileUploadFailedItemDto.builder()
                         .fileName(item.getFileName())
@@ -82,7 +83,6 @@ public class HomeNoteFileUploadService {
                 continue;
             }
 
-            // 2. 용량 검증
             if (item.getSizeBytes() > MAX_FILE_SIZE_BYTES) {
                 failedItems.add(HomeNoteFileUploadFailedItemDto.builder()
                         .fileName(item.getFileName())
@@ -95,7 +95,6 @@ public class HomeNoteFileUploadService {
                 continue;
             }
 
-            // 3. 검증 통과 - presigned URL 생성
             PresignedUrlItemResponseDto responseItem = fileAssetService.generatePresignedUrlForItem(item, "homenote");
             successItems.add(responseItem);
         }
@@ -112,6 +111,7 @@ public class HomeNoteFileUploadService {
     /**
      * 집 노트 파일 업로드 완료 검증 (부분 실패 허용)
      * - S3 존재 여부, 용량/타입 위변조 검증
+     * - S3 HEAD 요청은 Virtual Thread 기반 병렬 처리
      */
     @Transactional
     public HomeNoteFileCompleteResponseDto completeFileUpload(FileUploadCompleteRequestDto request) {
@@ -125,6 +125,44 @@ public class HomeNoteFileUploadService {
 
         List<FileUploadCompleteItemResponseDto> successItems = new ArrayList<>();
         List<HomeNoteFileCompleteFailedItemDto> failedItems = new ArrayList<>();
+
+        // S3 HEAD 요청이 필요한 항목 필터링 (존재하고, 아직 완료되지 않은 것만)
+        List<Long> fileAssetIdsNeedingHead = request.getFileItems().stream()
+                .map(FileUploadCompleteItemRequestDto::getFileAssetId)
+                .filter(id -> {
+                    FileAsset fa = fileAssetMap.get(id);
+                    return fa != null && fa.getStatus() != FileAssetStatus.COMPLETED;
+                })
+                .toList();
+
+        // [TIMING] Virtual Thread 기반 S3 HEAD 병렬 처리
+        long s3HeadStartTime = System.currentTimeMillis();
+        Map<Long, Optional<HeadObjectResponse>> headResponses;
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            Map<Long, Future<Optional<HeadObjectResponse>>> futures = fileAssetIdsNeedingHead.stream()
+                    .collect(Collectors.toMap(
+                            id -> id,
+                            id -> executor.submit(() -> {
+                                FileAsset fa = fileAssetMap.get(id);
+                                return s3Service.getObjectMetadata(fa.getFileKey());
+                            })
+                    ));
+
+            headResponses = futures.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> {
+                                try {
+                                    return entry.getValue().get();
+                                } catch (Exception e) {
+                                    log.error("S3 HEAD request failed: fileAssetId={}", entry.getKey(), e);
+                                    return Optional.empty();
+                                }
+                            }
+                    ));
+        }
+        long s3HeadDuration = System.currentTimeMillis() - s3HeadStartTime;
+        log.info("[TIMING] S3 HEAD 총합 (Virtual Thread): {}ms ({}개)", s3HeadDuration, headResponses.size());
 
         for (FileUploadCompleteItemRequestDto item : request.getFileItems()) {
             FileAsset fileAsset = fileAssetMap.get(item.getFileAssetId());
@@ -147,11 +185,10 @@ public class HomeNoteFileUploadService {
                 continue;
             }
 
-            // 2. S3 HEAD Object로 검증
-            Optional<HeadObjectResponse> headResponse = s3Service.getObjectMetadata(fileAsset.getFileKey());
+            // 2. 미리 병렬로 조회한 S3 HEAD 응답 사용
+            Optional<HeadObjectResponse> headResponse = headResponses.get(item.getFileAssetId());
 
-            if (headResponse.isEmpty()) {
-                // S3에 파일이 없음
+            if (headResponse == null || headResponse.isEmpty()) {
                 fileAsset.markFailed("FILE_UPLOAD_NOT_COMPLETED");
                 failedItems.add(HomeNoteFileCompleteFailedItemDto.builder()
                         .fileAssetId(fileAsset.getId())

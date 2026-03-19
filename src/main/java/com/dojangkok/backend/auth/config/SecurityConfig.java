@@ -1,5 +1,6 @@
 package com.dojangkok.backend.auth.config;
 
+import com.dojangkok.backend.auth.filter.InternalApiKeyFilter;
 import com.dojangkok.backend.auth.jwt.JwtAuthenticationFilter;
 import com.dojangkok.backend.auth.oauth.cookie.CookieOAuth2AuthorizationRequestRepository;
 import com.dojangkok.backend.auth.oauth.handler.OAuth2LoginSuccessHandler;
@@ -29,6 +30,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final InternalApiKeyFilter internalApiKeyFilter;
     private final ObjectMapper objectMapper;
     private final CorsConfigurationSource corsConfigurationSource;
     private final CookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
@@ -65,6 +67,7 @@ public class SecurityConfig {
                         .successHandler(oAuth2LoginSuccessHandler)
                 )
 
+                .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
