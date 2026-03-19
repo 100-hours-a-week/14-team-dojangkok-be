@@ -5,6 +5,7 @@ import com.dojangkok.backend.auth.jwt.JwtAuthenticationFilter;
 import com.dojangkok.backend.auth.oauth.cookie.CookieOAuth2AuthorizationRequestRepository;
 import com.dojangkok.backend.auth.oauth.handler.OAuth2LoginSuccessHandler;
 import com.dojangkok.backend.auth.oauth.service.CustomOAuth2UserService;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -48,6 +49,7 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers("/api/v1/auth/token", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/api/internal/**").permitAll()
