@@ -95,7 +95,7 @@ public class SsePollingScheduler {
                 lastSentTime.put(memberId, now);
                 log.debug("SSE heartbeat: memberId={}", memberId);
             } catch (IOException e) {
-                emitterStore.remove(memberId);
+                emitterStore.removeIfMatch(memberId, emitter);
                 lastSentTime.remove(memberId);
                 log.debug("SSE heartbeat failed, removing: memberId={}", memberId);
             }
@@ -126,7 +126,7 @@ public class SsePollingScheduler {
                     memberId, response.getType(), response.getCorrelationId());
             return true;
         } catch (IOException e) {
-            emitterStore.remove(memberId);
+            emitterStore.removeIfMatch(memberId, emitter);
             lastSentTime.remove(memberId);
             log.error("SSE push failed: memberId={}", memberId, e);
             return false;
