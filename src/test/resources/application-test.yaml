@@ -63,6 +63,8 @@ app:
     success-redirect: http://localhost:3000/auth/success
   cors:
     allowed-origins: http://localhost:3000
+  internal:
+    api-key: test-internal-api-key
 
 jwt:
   issuer: dojangkok
@@ -75,9 +77,6 @@ ai:
     token: test-ai-token
     url: http://localhost:8000
     mock-enabled: true
-
-internal:
-  token: test-internal-token
 
 management:
   endpoints:
