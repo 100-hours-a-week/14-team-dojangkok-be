@@ -22,9 +22,13 @@ public class RabbitMQConfig {
     public static final String CANCEL_REQUEST_DLQ = "quorum.cancel.request.dlq";
     public static final String AI_RESPONSE_DLQ = "quorum.ai.response.dlq";
 
+    public static final String NOTIFICATION_QUEUE = "notification.queue";
+    public static final String NOTIFICATION_DLQ = "notification.queue.dlq";
+
     public static final String WAS_EXCHANGE = "was.exchange";
     public static final String FAST_EXCHANGE = "fast.exchange";
     public static final String DLX_EXCHANGE = "dlx.exchange";
+    public static final String NOTIFICATION_EXCHANGE = "notification.events";
 
     @Bean
     public Queue easyContractRequestQueue() {
@@ -87,6 +91,21 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue notificationQueue() {
+        return QueueBuilder.durable(NOTIFICATION_QUEUE)
+                .deadLetterExchange(DLX_EXCHANGE)
+                .deadLetterRoutingKey("notification.queue")
+                .ttl(300000)
+                .quorum()
+                .build();
+    }
+
+    @Bean
+    public Queue notificationDlq() {
+        return QueueBuilder.durable(NOTIFICATION_DLQ).quorum().build();
+    }
+
+    @Bean
     public DirectExchange wasExchange() {
         return new DirectExchange(WAS_EXCHANGE);
     }
@@ -99,6 +118,11 @@ public class RabbitMQConfig {
     @Bean
     public DirectExchange dlxExchange() {
         return new DirectExchange(DLX_EXCHANGE);
+    }
+
+    @Bean
+    public DirectExchange notificationExchange() {
+        return new DirectExchange(NOTIFICATION_EXCHANGE);
     }
 
     @Bean
@@ -147,6 +171,18 @@ public class RabbitMQConfig {
     public Binding aiResponseDlqBinding(Queue aiResponseDlq, DirectExchange dlxExchange) {
         return BindingBuilder.bind(aiResponseDlq)
                 .to(dlxExchange).with("quorum.ai.response");
+    }
+
+    @Bean
+    public Binding notificationBinding(Queue notificationQueue, DirectExchange notificationExchange) {
+        return BindingBuilder.bind(notificationQueue)
+                .to(notificationExchange).with("chat.notification");
+    }
+
+    @Bean
+    public Binding notificationDlqBinding(Queue notificationDlq, DirectExchange dlxExchange) {
+        return BindingBuilder.bind(notificationDlq)
+                .to(dlxExchange).with("notification.queue");
     }
 
     @Bean

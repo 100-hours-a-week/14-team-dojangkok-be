@@ -1,6 +1,5 @@
 package com.dojangkok.backend.sse;
 
-import com.dojangkok.backend.mq.dto.AiResponseDto;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -112,18 +111,22 @@ public class SsePollingScheduler {
 
     private boolean sendEvent(Long memberId, SseEmitter emitter, String value) {
         try {
-            AiResponseDto response = objectMapper.readValue(value, AiResponseDto.class);
-
-            // type 필드로 SSE 이벤트 이름 결정
-            String eventName = resolveEventName(response.getType());
+            // type 필드를 먼저 추출하여 이벤트 이름 결정
+            String eventName;
+            try {
+                ObjectNode node = (ObjectNode) objectMapper.readTree(value);
+                String type = node.has("type") ? node.get("type").asText() : null;
+                eventName = resolveEventName(type);
+            } catch (Exception e) {
+                eventName = "unknown";
+            }
 
             emitter.send(SseEmitter.event()
                     .name(eventName)
                     .data(value));  // 원본 JSON 그대로 전달
 
             lastSentTime.put(memberId, System.currentTimeMillis());
-            log.info("SSE push: memberId={}, type={}, correlationId={}",
-                    memberId, response.getType(), response.getCorrelationId());
+            log.info("SSE push: memberId={}, eventName={}", memberId, eventName);
             return true;
         } catch (IOException e) {
             emitterStore.removeIfMatch(memberId, emitter);
@@ -138,6 +141,7 @@ public class SsePollingScheduler {
         return switch (type) {
             case "easy-contract" -> "easy-contract-result";
             case "checklist" -> "checklist-result";
+            case "chat-message" -> "chat-notification";
             default -> type;
         };
     }
