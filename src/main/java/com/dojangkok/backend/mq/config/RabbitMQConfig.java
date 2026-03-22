@@ -93,7 +93,7 @@ public class RabbitMQConfig {
     public Queue notificationQueue() {
         return QueueBuilder.durable(NOTIFICATION_QUEUE)
                 .deadLetterExchange(DLX_EXCHANGE)
-                .deadLetterRoutingKey("notification.queue")
+                .deadLetterRoutingKey("quorum.notification")
                 .ttl(300000)
                 .quorum()
                 .build();
@@ -181,7 +181,7 @@ public class RabbitMQConfig {
     @Bean
     public Binding notificationDlqBinding(Queue notificationDlq, DirectExchange dlxExchange) {
         return BindingBuilder.bind(notificationDlq)
-                .to(dlxExchange).with("notification.queue");
+                .to(dlxExchange).with("quorum.notification");
     }
 
     @Bean
