@@ -16,14 +16,13 @@ public class RabbitMQConfig {
     public static final String CHECKLIST_REQUEST_QUEUE = "quorum.checklist.request";
     public static final String CANCEL_REQUEST_QUEUE = "quorum.cancel.request";
     public static final String AI_RESPONSE_QUEUE = "quorum.ai.response";
+    public static final String NOTIFICATION_QUEUE = "quorum.notification";
 
     public static final String EASY_CONTRACT_REQUEST_DLQ = "quorum.easy-contract.request.dlq";
     public static final String CHECKLIST_REQUEST_DLQ = "quorum.checklist.request.dlq";
     public static final String CANCEL_REQUEST_DLQ = "quorum.cancel.request.dlq";
     public static final String AI_RESPONSE_DLQ = "quorum.ai.response.dlq";
-
-    public static final String NOTIFICATION_QUEUE = "notification.queue";
-    public static final String NOTIFICATION_DLQ = "notification.queue.dlq";
+    public static final String NOTIFICATION_DLQ = "quorum.notification.dlq";
 
     public static final String WAS_EXCHANGE = "was.exchange";
     public static final String FAST_EXCHANGE = "fast.exchange";
