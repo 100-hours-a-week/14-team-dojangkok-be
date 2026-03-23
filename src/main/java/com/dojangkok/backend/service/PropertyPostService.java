@@ -106,6 +106,10 @@ public class PropertyPostService {
             throw new GeneralException(Code.PROPERTY_POST_DELETED);
         }
 
+        if (post.isHidden() && !post.getMember().getId().equals(memberId)) {
+            throw new GeneralException(Code.PROPERTY_POST_HIDDEN);
+        }
+
         boolean isBookmarked = bookmarkRepository.existsById(new BookmarkId(memberId, propertyPostId));
 
         List<PropertyPostImageDto> images = getPropertyPostImages(post.getId());

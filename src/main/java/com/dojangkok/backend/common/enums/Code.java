@@ -66,6 +66,7 @@ public enum Code {
     // 매물 게시글 관련 오류
     PROPERTY_POST_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "PROPERTY_POST_NOT_FOUND", "해당 매물 게시글이 존재하지 않습니다."),
     PROPERTY_POST_FORBIDDEN(HttpStatus.FORBIDDEN.value(), "PROPERTY_POST_FORBIDDEN", "해당 매물 게시글에 대한 권한이 없습니다."),
+    PROPERTY_POST_HIDDEN(HttpStatus.FORBIDDEN.value(), "PROPERTY_POST_HIDDEN", "숨김 처리된 게시글입니다."),
     PROPERTY_POST_UPDATE_NOT_ALLOWED(HttpStatus.CONFLICT.value(), "PROPERTY_POST_UPDATE_NOT_ALLOWED", "현재 상태에서는 게시글을 수정할 수 없습니다."),
     PROPERTY_POST_FILE_NOT_FOUND(HttpStatus.NOT_FOUND.value(), "PROPERTY_POST_FILE_NOT_FOUND", "해당 이미지가 존재하지 않습니다."),
     PROPERTY_POST_FILE_RELATION_CONFLICT(HttpStatus.CONFLICT.value(), "PROPERTY_POST_FILE_RELATION_CONFLICT", "해당 이미지가 매물 게시글에 포함되어 있지 않습니다."),
