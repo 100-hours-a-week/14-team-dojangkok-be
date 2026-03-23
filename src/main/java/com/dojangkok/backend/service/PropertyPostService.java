@@ -8,6 +8,7 @@ import com.dojangkok.backend.domain.*;
 import com.dojangkok.backend.domain.enums.PostStatus;
 import com.dojangkok.backend.dto.propertypost.*;
 import com.dojangkok.backend.mapper.PropertyPostMapper;
+import com.dojangkok.backend.mq.DataEventProducer;
 import com.dojangkok.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class PropertyPostService {
     private final PropertyPostMapper propertyPostMapper;
     private final FileAssetValidator fileAssetValidator;
     private final FileAssetRepository fileAssetRepository;
+    private final DataEventProducer dataEventProducer;
 
 
     @Transactional(readOnly = true)
@@ -260,6 +262,12 @@ public class PropertyPostService {
 
         log.info("PropertyPost updated: id={}, memberId={}", propertyPostId, memberId);
 
+        // 채팅 서버 캐시 무효화 이벤트 발행
+        String thumbnailUrl = getPropertyPostImages(post.getId()).stream()
+                .findFirst().map(PropertyPostImageDto::getPresignedUrl).orElse(null);
+        dataEventProducer.publishPropertyUpdated(
+                propertyPostId, post.getTitle(), thumbnailUrl, post.getDealStatus().name());
+
         List<PropertyPostImageDto> images = getPropertyPostImages(post.getId());
         return propertyPostMapper.toPropertyPostResponseDto(member, post, images, false);
     }
@@ -349,6 +357,10 @@ public class PropertyPostService {
 
         log.info("PropertyPost deal status changed: id={}, dealStatus={}", propertyPostId, requestDto.getDealStatus());
 
+        // 채팅 서버 캐시 무효화 이벤트 발행
+        dataEventProducer.publishPropertyUpdated(
+                propertyPostId, post.getTitle(), null, post.getDealStatus().name());
+
         return propertyPostMapper.toDealStatusUpdateResponseDto(post);
     }
 
@@ -376,6 +388,9 @@ public class PropertyPostService {
         post.softDelete();
 
         log.info("PropertyPost soft deleted: id={}, memberId={}", propertyPostId, memberId);
+
+        // 채팅 서버 캐시 무효화 이벤트 발행
+        dataEventProducer.publishPropertyDeleted(propertyPostId);
     }
 
     @Transactional

@@ -9,6 +9,7 @@ import com.dojangkok.backend.dto.member.UpdateNicknameRequestDto;
 import com.dojangkok.backend.dto.member.UpdateNicknameResponseDto;
 import com.dojangkok.backend.dto.member.ProfileResponseDto;
 import com.dojangkok.backend.mapper.MemberMapper;
+import com.dojangkok.backend.mq.DataEventProducer;
 import com.dojangkok.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberMapper memberMapper;
     private final RedisRefreshTokenStore refreshTokenStore;
+    private final DataEventProducer dataEventProducer;
     private final WithdrawnMemberRepository withdrawnMemberRepository;
     private final SocialAuthRepository socialAuthRepository;
     private final BookmarkRepository bookmarkRepository;
@@ -54,6 +56,9 @@ public class MemberService {
         String nickname = updateNicknameRequestDto.getNickname();
         validateNickname(nickname);
         member.updateNickname(nickname);
+
+        // 채팅 서버 캐시 무효화 이벤트 발행
+        dataEventProducer.publishUserUpdated(memberId, nickname, member.getProfileImage());
 
         return memberMapper.toUpdateNicknameResponse(member, nickname);
     }
@@ -92,6 +97,9 @@ public class MemberService {
 
         // 6. Member 삭제
         memberRepository.delete(member);
+
+        // 7. 채팅 서버 캐시 무효화 이벤트 발행
+        dataEventProducer.publishUserDeleted(memberId);
     }
 
     private void deleteBookmarks(Long memberId) {
