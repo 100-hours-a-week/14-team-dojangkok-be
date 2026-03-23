@@ -17,17 +17,20 @@ public class RabbitMQConfig {
     public static final String CANCEL_REQUEST_QUEUE = "quorum.cancel.request";
     public static final String AI_RESPONSE_QUEUE = "quorum.ai.response";
     public static final String NOTIFICATION_QUEUE = "quorum.notification";
+    public static final String DATA_EVENTS_QUEUE = "quorum.data";
 
     public static final String EASY_CONTRACT_REQUEST_DLQ = "quorum.easy-contract.request.dlq";
     public static final String CHECKLIST_REQUEST_DLQ = "quorum.checklist.request.dlq";
     public static final String CANCEL_REQUEST_DLQ = "quorum.cancel.request.dlq";
     public static final String AI_RESPONSE_DLQ = "quorum.ai.response.dlq";
     public static final String NOTIFICATION_DLQ = "quorum.notification.dlq";
+    public static final String DATA_EVENTS_DLQ = "quorum.data.dlq";
 
     public static final String WAS_EXCHANGE = "was.exchange";
     public static final String FAST_EXCHANGE = "fast.exchange";
     public static final String DLX_EXCHANGE = "dlx.exchange";
     public static final String NOTIFICATION_EXCHANGE = "notification.events";
+    public static final String DATA_EVENTS_EXCHANGE = "data.events";
 
     @Bean
     public Queue easyContractRequestQueue() {
@@ -99,9 +102,25 @@ public class RabbitMQConfig {
                 .build();
     }
 
+
+    @Bean
+    public Queue dataEventsQueue() {
+        return QueueBuilder.durable(DATA_EVENTS_QUEUE)
+                .deadLetterExchange(DLX_EXCHANGE)
+                .deadLetterRoutingKey("quorum.data")
+                .ttl(300000)
+                .quorum()
+                .build();
+    }
+
     @Bean
     public Queue notificationDlq() {
         return QueueBuilder.durable(NOTIFICATION_DLQ).quorum().build();
+    }
+
+    @Bean
+    public Queue dataEventsDlq() {
+        return QueueBuilder.durable(DATA_EVENTS_DLQ).quorum().build();
     }
 
     @Bean
@@ -122,6 +141,11 @@ public class RabbitMQConfig {
     @Bean
     public DirectExchange notificationExchange() {
         return new DirectExchange(NOTIFICATION_EXCHANGE);
+    }
+
+    @Bean
+    public DirectExchange dataEventsExchange() {
+        return new DirectExchange(DATA_EVENTS_EXCHANGE);
     }
 
     @Bean
@@ -149,6 +173,18 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Binding notificationBinding(Queue notificationQueue, DirectExchange notificationExchange) {
+        return BindingBuilder.bind(notificationQueue)
+                .to(notificationExchange).with("quorum.notification");
+    }
+
+    @Bean
+    public Binding dataEventsBinding(Queue dataEventsQueue, DirectExchange dataEventsExchange) {
+        return BindingBuilder.bind(dataEventsQueue)
+                .to(dataEventsExchange).with("quorum.data");
+    }
+
+    @Bean
     public Binding easyContractRequestDlqBinding(Queue easyContractRequestDlq, DirectExchange dlxExchange) {
         return BindingBuilder.bind(easyContractRequestDlq)
                 .to(dlxExchange).with("quorum.easy-contract.request");
@@ -173,15 +209,15 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding notificationBinding(Queue notificationQueue, DirectExchange notificationExchange) {
-        return BindingBuilder.bind(notificationQueue)
-                .to(notificationExchange).with("chat.notification");
-    }
-
-    @Bean
     public Binding notificationDlqBinding(Queue notificationDlq, DirectExchange dlxExchange) {
         return BindingBuilder.bind(notificationDlq)
                 .to(dlxExchange).with("quorum.notification");
+    }
+
+    @Bean
+    public Binding dataEventsDlqBinding(Queue dataEventsDlq, DirectExchange dlxExchange) {
+        return BindingBuilder.bind(dataEventsDlq)
+                .to(dlxExchange).with("quorum.data");
     }
 
     @Bean
