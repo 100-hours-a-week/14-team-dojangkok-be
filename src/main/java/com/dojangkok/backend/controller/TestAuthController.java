@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @Profile("dev")
 @RestController
 @RequiredArgsConstructor
@@ -22,17 +24,25 @@ public class TestAuthController {
 
     @GetMapping("/mock-login/{userId}")
     public String mockLogin(@PathVariable Long userId) {
-        Member member = memberRepository.findById(userId).orElseGet(() -> {
-            Member newMember = Member.createMember(
-                    "tester" + userId,
-                    "tester" + userId + "@test.com",
-                    Role.USER,
-                    "tester" + userId,
-                    null
-            );
-            return memberRepository.save(newMember);
-        });
+        // 1) ID로 조회
+        Optional<Member> byId = memberRepository.findById(userId);
+        if (byId.isPresent()) {
+            return jwtProvider.createAccessToken(byId.get().getId());
+        }
 
-        return jwtProvider.createAccessToken(member.getId());
+        // 2) 없으면 nickname 중복 체크 후 생성
+        String nickname = "tester" + userId;
+        String email = "tester" + userId + "@test.com";
+
+        if (memberRepository.existsByNickname(nickname)) {
+            // 이미 다른 ID로 같은 nickname이 존재 → 타임스탬프 추가
+            nickname = "tester" + userId + "_" + System.currentTimeMillis();
+            email = "tester" + userId + "_" + System.currentTimeMillis() + "@test.com";
+        }
+
+        Member newMember = Member.createMember(nickname, email, Role.USER, nickname, null);
+        memberRepository.save(newMember);
+
+        return jwtProvider.createAccessToken(newMember.getId());
     }
 }
