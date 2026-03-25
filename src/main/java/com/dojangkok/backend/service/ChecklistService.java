@@ -123,4 +123,17 @@ public class ChecklistService {
                 .findByLifestyleVersionId(lifestyle.getCurrentVersion().getId())
                 .orElseThrow(() -> new GeneralException(Code.CHECKLIST_TEMPLATE_NOT_FOUND));
     }
+
+    @Transactional(readOnly = true)
+    public ChecklistTemplateResponseDto getChecklistTemplateById(Long templateId) {
+        // 1. 템플릿 ID와 요청한 사용자(Member)의 ID가 모두 일치하는 데이터만 조회
+        ChecklistTemplate template = checklistTemplateRepository.findById(templateId)
+                .orElseThrow(() -> new GeneralException(Code.CHECKLIST_TEMPLATE_NOT_FOUND));
+        List<ChecklistTemplateItem> templateItems = checklistTemplateItemRepository
+                .findAllByChecklistTemplateId(template.getId());
+
+        // 2. 엔티티를 DTO로 변환하여 반환 (기존에 구현해두신 변환 로직 사용)
+        return checklistMapper.toChecklistTemplateResponseDto(template, templateItems);
+    }
+
 }
