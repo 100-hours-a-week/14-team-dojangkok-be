@@ -54,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v2/property-posts", "/api/v2/property-posts/{propertyPostId}").permitAll()
                         .requestMatchers("/api/v1/auth/token", "/api/v1/auth/refresh").permitAll()
+                        .requestMatchers("/api/v1/test/**").permitAll()
                         .requestMatchers("/api/internal/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
