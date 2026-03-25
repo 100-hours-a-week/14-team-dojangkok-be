@@ -1,6 +1,7 @@
 package com.dojangkok.backend.repository;
 
 import com.dojangkok.backend.domain.ChecklistTemplate;
+import com.dojangkok.backend.domain.LifestyleVersion;
 import com.dojangkok.backend.domain.enums.ChecklistTemplateStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -31,4 +32,6 @@ public interface ChecklistTemplateRepository extends JpaRepository<ChecklistTemp
     List<ChecklistTemplate> findAllByStatusAndCreatedAtBefore(
             @Param("status") ChecklistTemplateStatus checklistTemplateStatus,
             @Param("threshold") LocalDateTime threshold);
+
+    Optional<ChecklistTemplate> findByIdAndLifestyleVersion(Long id, LifestyleVersion lifestyleVersion);
 }

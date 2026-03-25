@@ -108,4 +108,15 @@ public class HomeNoteController {
         ChecklistItemStatusResponseDto responseDto = checklistService.updateChecklistItemStatus(memberId, homeNoteId, itemId, requestDto);
         return new DataResponseDto<>(Code.SUCCESS, "체크리스트 항목 상태 변경에 성공하였습니다.", responseDto);
     }
+
+    // 기존 코드는 그대로 두고, 테스트(혹은 상세 조회)용 API를 추가합니다.
+    @GetMapping("/checklists/templates/{templateId}")
+    public DataResponseDto<ChecklistTemplateResponseDto> getChecklistTemplateById(
+            @CurrentMemberId Long memberId,
+            @PathVariable Long templateId
+    ) {
+        // memberId와 templateId를 모두 조건으로 걸어, 본인의 특정 템플릿 상태만 가져오도록 서비스 로직 구현
+        ChecklistTemplateResponseDto responseDto = checklistService.getChecklistTemplateById(templateId);
+        return new DataResponseDto<>(Code.SUCCESS, "특정 체크리스트 템플릿 조회에 성공하였습니다.", responseDto);
+    }
 }
