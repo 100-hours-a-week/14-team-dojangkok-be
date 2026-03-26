@@ -32,7 +32,7 @@ public class SsePollingScheduler {
     // 각 멤버별 마지막 이벤트 전송 시각 기록
     private final ConcurrentHashMap<Long, Long> lastSentTime = new ConcurrentHashMap<>();
 
-    @Scheduled(fixedDelay = 2000)
+    @Scheduled(fixedDelay = 1000)
     public void poll() {
         if (emitterStore.isEmpty()) return;
 
