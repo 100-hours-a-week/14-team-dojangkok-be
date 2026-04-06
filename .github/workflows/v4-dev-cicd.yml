@@ -112,6 +112,9 @@ jobs:
             docker compose pull backend
             docker compose up -d backend
             docker image prune -f
+
+            # Restart Alloy to pick up new container
+            sudo systemctl restart alloy || true
           ENDSSH
 
       - name: Health check
