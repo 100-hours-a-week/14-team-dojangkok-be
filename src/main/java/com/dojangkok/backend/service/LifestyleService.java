@@ -9,13 +9,14 @@ import com.dojangkok.backend.domain.Member;
 import com.dojangkok.backend.domain.enums.OnboardingStatus;
 import com.dojangkok.backend.dto.lifestyle.LifestyleRequestDto;
 import com.dojangkok.backend.dto.lifestyle.LifestyleResponseDto;
-import com.dojangkok.backend.event.LifestyleCreatedEvent;
+import com.dojangkok.backend.event.ChecklistTemplateCreatedEvent;
 import com.dojangkok.backend.mapper.LifestyleMapper;
 import com.dojangkok.backend.repository.LifestyleItemRepository;
 import com.dojangkok.backend.repository.LifestyleRepository;
 import com.dojangkok.backend.repository.LifestyleVersionRepository;
 import com.dojangkok.backend.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LifestyleService {
@@ -32,6 +34,7 @@ public class LifestyleService {
     private final LifestyleVersionRepository lifestyleVersionRepository;
     private final LifestyleItemRepository lifestyleItemRepository;
     private final LifestyleMapper lifestyleMapper;
+    private final ChecklistTemplateService checklistTemplateService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -61,8 +64,15 @@ public class LifestyleService {
         }
         lifestyle.updateCurrentVersion(lifestyleVersion);
 
-        // 이벤트 발행 - 트랜잭션 커밋 후 비동기로 체크리스트 생성
-        eventPublisher.publishEvent(new LifestyleCreatedEvent(memberId, lifestyleVersion.getId(), lifestyleItems));
+        // 같은 트랜잭션에서 ChecklistTemplate + OutboxEvent 저장
+        Long outboxEventId = checklistTemplateService.prepareChecklistGeneration(
+                memberId, lifestyleVersion.getId(), lifestyleItems);
+
+        // 이벤트 발행 - 트랜잭션 커밋 후 비동기로 MQ 발행
+        eventPublisher.publishEvent(new ChecklistTemplateCreatedEvent(outboxEventId));
+
+        log.info("Lifestyle created with checklist preparation: memberId={}, lifestyleVersionId={}, outboxEventId={}",
+                memberId, lifestyleVersion.getId(), outboxEventId);
 
         return lifestyleMapper.toLifestyleResponseDto(member, lifestyleItemList);
     }

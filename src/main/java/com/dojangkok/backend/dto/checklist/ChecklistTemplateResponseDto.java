@@ -1,5 +1,6 @@
 package com.dojangkok.backend.dto.checklist;
 
+import com.dojangkok.backend.domain.enums.ChecklistTemplateStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,6 +13,9 @@ public class ChecklistTemplateResponseDto {
 
     @JsonProperty("checklist_template_id")
     private Long checklistTemplateId;
+
+    @JsonProperty("checklist_template_status")
+    private ChecklistTemplateStatus checklistTemplateStatus;
 
     @JsonProperty("checklist_template_items")
     private List<ChecklistTemplateItemDto> checklistTemplateItems;

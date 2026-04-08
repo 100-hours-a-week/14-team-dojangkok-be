@@ -10,11 +10,14 @@ import com.dojangkok.backend.domain.EasyContract;
 import com.dojangkok.backend.domain.EasyContractFile;
 import com.dojangkok.backend.domain.FileAsset;
 import com.dojangkok.backend.domain.Member;
+import com.dojangkok.backend.domain.OutboxEvent;
 import com.dojangkok.backend.domain.enums.EasyContractStatus;
 import com.dojangkok.backend.dto.easycontract.EasyContractFileDto;
 import com.dojangkok.backend.dto.easycontract.*;
+import com.dojangkok.backend.event.EasyContractCreatedEvent;
 import com.dojangkok.backend.mapper.EasyContractMapper;
 import com.dojangkok.backend.mq.EasyContractMqProducer;
+import com.dojangkok.backend.mq.config.RabbitMQConfig;
 import com.dojangkok.backend.mq.dto.EasyContractCancelRequestDto;
 import com.dojangkok.backend.mq.dto.EasyContractMqRequestDto;
 import com.dojangkok.backend.mq.dto.EasyContractMqResponseDto;
@@ -24,12 +27,11 @@ import com.dojangkok.backend.repository.FileAssetRepository;
 import com.dojangkok.backend.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +54,8 @@ public class EasyContractService {
     private final EasyContractMapper easyContractMapper;
     private final EasyContractMqProducer easyContractMqProducer;
     private final FileAssetRepository fileAssetRepository;
+    private final OutboxEventService outboxEventService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public EasyContractCreateResponseDto createEasyContract(Long memberId, EasyContractFileRequestDto requestDto) {
@@ -94,7 +98,17 @@ public class EasyContractService {
                 .files(fileDtoList)
                 .build();
 
-        easyContractMqProducer.sendRequest(request);
+        // Outbox 이벤트 저장 (같은 트랜잭션)
+        OutboxEvent outboxEvent = outboxEventService.saveEvent(
+                "EASY_CONTRACT",
+                easyContract.getId(),
+                RabbitMQConfig.WAS_EXCHANGE,
+                "quorum.easy-contract.request",
+                request
+        );
+
+        // 이벤트 발행 - 트랜잭션 커밋 후 비동기로 MQ 발행
+        eventPublisher.publishEvent(new EasyContractCreatedEvent(outboxEvent.getId()));
 
         log.info("EasyContract creation requested: id={}, correlationId={}",
                 easyContract.getId(), correlationId);

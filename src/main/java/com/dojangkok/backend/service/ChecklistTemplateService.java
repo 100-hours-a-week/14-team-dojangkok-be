@@ -6,10 +6,11 @@ import com.dojangkok.backend.common.util.CorrelationIdGenerator;
 import com.dojangkok.backend.domain.ChecklistTemplate;
 import com.dojangkok.backend.domain.ChecklistTemplateItem;
 import com.dojangkok.backend.domain.LifestyleVersion;
+import com.dojangkok.backend.domain.OutboxEvent;
 import com.dojangkok.backend.domain.enums.ChecklistTemplateStatus;
 import com.dojangkok.backend.dto.checklist.ChecklistGenerateRequestDto;
 import com.dojangkok.backend.mapper.ChecklistTemplateMapper;
-import com.dojangkok.backend.mq.ChecklistMqProducer;
+import com.dojangkok.backend.mq.config.RabbitMQConfig;
 import com.dojangkok.backend.mq.dto.ChecklistMqRequestDto;
 import com.dojangkok.backend.repository.ChecklistTemplateItemRepository;
 import com.dojangkok.backend.repository.ChecklistTemplateRepository;
@@ -30,10 +31,9 @@ public class ChecklistTemplateService {
     private final ChecklistTemplateItemRepository checklistTemplateItemRepository;
     private final LifestyleVersionRepository lifestyleVersionRepository;
     private final ChecklistTemplateMapper checklistTemplateMapper;
-    private final ChecklistMqProducer checklistMqProducer;
+    private final OutboxEventService outboxEventService;
 
-    @Transactional
-    public void requestChecklistGeneration(Long memberId, Long lifestyleVersionId, List<String> lifestyleItems) {
+    public Long prepareChecklistGeneration(Long memberId, Long lifestyleVersionId, List<String> lifestyleItems) {
         LifestyleVersion lifestyleVersion = lifestyleVersionRepository.findById(lifestyleVersionId)
                 .orElseThrow(() -> new GeneralException(Code.LIFESTYLE_VERSION_NOT_FOUND));
 
@@ -51,10 +51,18 @@ public class ChecklistTemplateService {
                 .keywords(generateRequest.getKeywords())
                 .build();
 
-        checklistMqProducer.sendRequest(request);
+        OutboxEvent outboxEvent = outboxEventService.saveEvent(
+                "CHECKLIST_TEMPLATE",
+                checklistTemplate.getId(),
+                RabbitMQConfig.WAS_EXCHANGE,
+                "quorum.checklist.request",
+                request
+        );
 
-        log.info("Checklist generation requested: templateId={}, correlationId={}",
-                checklistTemplate.getId(), correlationId);
+        log.info("Checklist generation prepared: templateId={}, correlationId={}, outboxEventId={}",
+                checklistTemplate.getId(), correlationId, outboxEvent.getId());
+
+        return outboxEvent.getId();
     }
 
     @Transactional
