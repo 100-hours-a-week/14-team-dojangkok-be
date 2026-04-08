@@ -20,6 +20,7 @@ public class ChecklistMapper {
 
         return ChecklistTemplateResponseDto.builder()
                 .checklistTemplateId(template.getId())
+                .checklistTemplateStatus(template.getChecklistTemplateStatus())
                 .checklistTemplateItems(itemDtos)
                 .build();
     }
