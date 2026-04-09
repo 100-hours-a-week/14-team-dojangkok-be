@@ -32,7 +32,7 @@ import java.util.Map;
 public class HomeNoteService {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int MAX_PREVIEW_IMAGES = 10;
+    private static final int MAX_PREVIEW_IMAGES = 4;
     private static final int MAX_TITLE_LENGTH = 50;
     private static final int MAX_ATTACH_ITEMS = 50;
 
