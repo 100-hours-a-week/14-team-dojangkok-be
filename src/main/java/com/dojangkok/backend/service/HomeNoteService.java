@@ -23,8 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,7 +34,7 @@ import java.util.Map;
 public class HomeNoteService {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int MAX_PREVIEW_IMAGES = 10;
+    private static final int MAX_PREVIEW_IMAGES = 4;
     private static final int MAX_TITLE_LENGTH = 50;
     private static final int MAX_ATTACH_ITEMS = 50;
 
@@ -79,8 +81,17 @@ public class HomeNoteService {
             homeNotes = homeNotes.subList(0, DEFAULT_PAGE_SIZE);
         }
 
+        // N+1 방지: HomeNote별 파일 개수와 프리뷰를 한 번에 IN-batch 조회
+        List<Long> homeNoteIds = homeNotes.stream().map(HomeNote::getId).toList();
+        Map<Long, Integer> fileCountMap = getFileCountMap(homeNoteIds);
+        Map<Long, List<PreviewImageDto>> previewImagesMap = getPreviewImagesMap(homeNoteIds);
+
         List<HomeNoteListItemDto> items = homeNotes.stream()
-                .map(this::toHomeNoteListItemDto)
+                .map(homeNote -> homeNoteMapper.toHomeNoteListItemDto(
+                        homeNote,
+                        fileCountMap.getOrDefault(homeNote.getId(), 0),
+                        previewImagesMap.getOrDefault(homeNote.getId(), List.of())
+                ))
                 .toList();
 
         String nextCursor = hasNext && !homeNotes.isEmpty()
@@ -220,21 +231,41 @@ public class HomeNoteService {
         }
     }
 
-    private HomeNoteListItemDto toHomeNoteListItemDto(HomeNote homeNote) {
-        int fileCount = homeNoteFileRepository.countByHomeNoteId(homeNote.getId());
+    private Map<Long, Integer> getFileCountMap(List<Long> homeNoteIds) {
+        if (homeNoteIds.isEmpty()) {
+            return Map.of();
+        }
+        return homeNoteFileRepository.countByHomeNoteIdIn(homeNoteIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+    }
 
-        Pageable pageable = PageRequest.of(0, MAX_PREVIEW_IMAGES);
-        List<HomeNoteFile> previewFiles = homeNoteFileRepository.findTop10ByHomeNoteIdWithFileAsset(
-                homeNote.getId(), pageable);
+    private Map<Long, List<PreviewImageDto>> getPreviewImagesMap(List<Long> homeNoteIds) {
+        if (homeNoteIds.isEmpty()) {
+            return Map.of();
+        }
 
-        List<PreviewImageDto> previewImages = previewFiles.stream()
-                .map(hnf -> {
-                    String presignedUrl = s3Service.generatePresignedDownloadUrl(hnf.getFileAsset().getFileKey());
-                    return homeNoteMapper.toPreviewImageDto(hnf.getFileAsset().getId(), presignedUrl);
-                })
-                .toList();
+        List<HomeNoteFile> allFiles =
+                homeNoteFileRepository.findAllByHomeNoteIdInWithFileAsset(homeNoteIds);
 
-        return homeNoteMapper.toHomeNoteListItemDto(homeNote, fileCount, previewImages);
+        // homeNoteId별로 그룹핑 (정렬은 쿼리 ORDER BY로 보장됨)
+        Map<Long, List<HomeNoteFile>> filesByHomeNoteId = allFiles.stream()
+                .collect(Collectors.groupingBy(hnf -> hnf.getHomeNote().getId()));
+
+        Map<Long, List<PreviewImageDto>> result = new HashMap<>();
+        for (Map.Entry<Long, List<HomeNoteFile>> entry : filesByHomeNoteId.entrySet()) {
+            List<PreviewImageDto> previews = entry.getValue().stream()
+                    .limit(MAX_PREVIEW_IMAGES)
+                    .map(hnf -> {
+                        String presignedUrl = s3Service.generatePresignedDownloadUrl(hnf.getFileAsset().getFileKey());
+                        return homeNoteMapper.toPreviewImageDto(hnf.getFileAsset().getId(), presignedUrl);
+                    })
+                    .toList();
+            result.put(entry.getKey(), previews);
+        }
+        return result;
     }
 
     private HomeNoteFileItemDto toHomeNoteFileItemDto(HomeNoteFile homeNoteFile) {

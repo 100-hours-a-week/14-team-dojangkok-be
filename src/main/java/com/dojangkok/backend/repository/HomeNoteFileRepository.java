@@ -40,14 +40,19 @@ public interface HomeNoteFileRepository extends JpaRepository<HomeNoteFile, Long
             Pageable pageable
     );
 
-    @Query("SELECT hnf FROM HomeNoteFile hnf " +
-            "JOIN FETCH hnf.fileAsset " +
-            "WHERE hnf.homeNote.id = :homeNoteId " +
-            "ORDER BY hnf.sortOrder ASC")
-    List<HomeNoteFile> findTop10ByHomeNoteIdWithFileAsset(@Param("homeNoteId") Long homeNoteId, Pageable pageable);
-
     @Query("SELECT MAX(hnf.sortOrder) FROM HomeNoteFile hnf WHERE hnf.homeNote.id = :homeNoteId")
     Optional<Integer> findMaxSortOrderByHomeNoteId(@Param("homeNoteId") Long homeNoteId);
 
     Optional<HomeNoteFile> findByFileAssetIdAndHomeNoteId(Long id, Long homeNoteId);
+
+    @Query("SELECT hnf.homeNote.id, COUNT(hnf) FROM HomeNoteFile hnf " +
+            "WHERE hnf.homeNote.id IN :homeNoteIds " +
+            "GROUP BY hnf.homeNote.id")
+    List<Object[]> countByHomeNoteIdIn(@Param("homeNoteIds") List<Long> homeNoteIds);
+
+    @Query("SELECT hnf FROM HomeNoteFile hnf " +
+            "JOIN FETCH hnf.fileAsset " +
+            "WHERE hnf.homeNote.id IN :homeNoteIds " +
+            "ORDER BY hnf.homeNote.id ASC, hnf.sortOrder ASC")
+    List<HomeNoteFile> findAllByHomeNoteIdInWithFileAsset(@Param("homeNoteIds") List<Long> homeNoteIds);
 }
