@@ -46,6 +46,16 @@ public class HomeNoteService {
     private final HomeNoteMapper homeNoteMapper;
     private final FileAssetValidator fileAssetValidator;
 
+    private record PreviewImagesMetrics(
+            Map<Long, List<PreviewImageDto>> previewImagesMap,
+            int fetchedFileCount,
+            int presignedCount,
+            long queryNanos,
+            long groupingNanos,
+            long presignNanos
+    ) {
+    }
+
     @Transactional
     public HomeNoteCreateResponseDto createHomeNote(Long memberId, HomeNoteCreateRequestDto requestDto) {
         validateTitle(requestDto.getTitle());
@@ -66,8 +76,10 @@ public class HomeNoteService {
 
     @Transactional(readOnly = true)
     public HomeNoteListResponseDto getHomeNoteList(Long memberId, String cursor) {
+        long totalStart = System.nanoTime();
         Pageable pageable = PageRequest.of(0, DEFAULT_PAGE_SIZE + 1);
         List<HomeNote> homeNotes;
+        long homeNotesQueryStart = System.nanoTime();
 
         if (cursor == null || cursor.isEmpty()) {
             homeNotes = homeNoteRepository.findAllByMemberIdAndNotDeleted(memberId, pageable);
@@ -75,6 +87,7 @@ public class HomeNoteService {
             Long cursorId = decodeCursor(cursor);
             homeNotes = homeNoteRepository.findAllByMemberIdAndNotDeletedWithCursor(memberId, cursorId, pageable);
         }
+        long homeNotesQueryNanos = System.nanoTime() - homeNotesQueryStart;
 
         boolean hasNext = homeNotes.size() > DEFAULT_PAGE_SIZE;
         if (hasNext) {
@@ -83,8 +96,11 @@ public class HomeNoteService {
 
         // N+1 방지: HomeNote별 파일 개수와 프리뷰를 한 번에 IN-batch 조회
         List<Long> homeNoteIds = homeNotes.stream().map(HomeNote::getId).toList();
+        long fileCountQueryStart = System.nanoTime();
         Map<Long, Integer> fileCountMap = getFileCountMap(homeNoteIds);
-        Map<Long, List<PreviewImageDto>> previewImagesMap = getPreviewImagesMap(homeNoteIds);
+        long fileCountQueryNanos = System.nanoTime() - fileCountQueryStart;
+        PreviewImagesMetrics previewMetrics = getPreviewImagesMap(homeNoteIds);
+        Map<Long, List<PreviewImageDto>> previewImagesMap = previewMetrics.previewImagesMap();
 
         List<HomeNoteListItemDto> items = homeNotes.stream()
                 .map(homeNote -> homeNoteMapper.toHomeNoteListItemDto(
@@ -98,7 +114,28 @@ public class HomeNoteService {
                 ? encodeCursor(homeNotes.getLast().getId())
                 : null;
 
-        return homeNoteMapper.toHomeNoteListResponseDto(items, DEFAULT_PAGE_SIZE, hasNext, nextCursor);
+        HomeNoteListResponseDto responseDto =
+                homeNoteMapper.toHomeNoteListResponseDto(items, DEFAULT_PAGE_SIZE, hasNext, nextCursor);
+
+        long totalNanos = System.nanoTime() - totalStart;
+        log.info(
+                "HomeNoteList timing memberId={} cursorPresent={} noteCount={} hasNext={} q1Ms={} q2Ms={} q3QueryMs={} groupingMs={} presignMs={} presignCount={} presignAvgMs={} fetchedFileCount={} totalMs={}",
+                memberId,
+                cursor != null && !cursor.isEmpty(),
+                homeNotes.size(),
+                hasNext,
+                toMillis(homeNotesQueryNanos),
+                toMillis(fileCountQueryNanos),
+                toMillis(previewMetrics.queryNanos()),
+                toMillis(previewMetrics.groupingNanos()),
+                toMillis(previewMetrics.presignNanos()),
+                previewMetrics.presignedCount(),
+                previewMetrics.presignedCount() == 0 ? 0.0 : nanosToMillis(previewMetrics.presignNanos()) / previewMetrics.presignedCount(),
+                previewMetrics.fetchedFileCount(),
+                toMillis(totalNanos)
+        );
+
+        return responseDto;
     }
 
     @Transactional(readOnly = true)
@@ -242,30 +279,44 @@ public class HomeNoteService {
                 ));
     }
 
-    private Map<Long, List<PreviewImageDto>> getPreviewImagesMap(List<Long> homeNoteIds) {
+    private PreviewImagesMetrics getPreviewImagesMap(List<Long> homeNoteIds) {
         if (homeNoteIds.isEmpty()) {
-            return Map.of();
+            return new PreviewImagesMetrics(Map.of(), 0, 0, 0L, 0L, 0L);
         }
 
+        long previewQueryStart = System.nanoTime();
         List<HomeNoteFile> allFiles =
                 homeNoteFileRepository.findAllByHomeNoteIdInWithFileAsset(homeNoteIds);
+        long previewQueryNanos = System.nanoTime() - previewQueryStart;
 
         // homeNoteId별로 그룹핑 (정렬은 쿼리 ORDER BY로 보장됨)
+        long groupingStart = System.nanoTime();
         Map<Long, List<HomeNoteFile>> filesByHomeNoteId = allFiles.stream()
                 .collect(Collectors.groupingBy(hnf -> hnf.getHomeNote().getId()));
+        long groupingNanos = System.nanoTime() - groupingStart;
 
+        long presignStart = System.nanoTime();
+        int presignedCount = 0;
         Map<Long, List<PreviewImageDto>> result = new HashMap<>();
         for (Map.Entry<Long, List<HomeNoteFile>> entry : filesByHomeNoteId.entrySet()) {
-            List<PreviewImageDto> previews = entry.getValue().stream()
-                    .limit(MAX_PREVIEW_IMAGES)
-                    .map(hnf -> {
-                        String presignedUrl = s3Service.generatePresignedDownloadUrl(hnf.getFileAsset().getFileKey());
-                        return homeNoteMapper.toPreviewImageDto(hnf.getFileAsset().getId(), presignedUrl);
-                    })
-                    .toList();
+            List<PreviewImageDto> previews = new ArrayList<>();
+            for (HomeNoteFile homeNoteFile : entry.getValue().stream().limit(MAX_PREVIEW_IMAGES).toList()) {
+                String presignedUrl = s3Service.generatePresignedDownloadUrl(homeNoteFile.getFileAsset().getFileKey());
+                previews.add(homeNoteMapper.toPreviewImageDto(homeNoteFile.getFileAsset().getId(), presignedUrl));
+                presignedCount++;
+            }
             result.put(entry.getKey(), previews);
         }
-        return result;
+        long presignNanos = System.nanoTime() - presignStart;
+
+        return new PreviewImagesMetrics(
+                result,
+                allFiles.size(),
+                presignedCount,
+                previewQueryNanos,
+                groupingNanos,
+                presignNanos
+        );
     }
 
     private HomeNoteFileItemDto toHomeNoteFileItemDto(HomeNoteFile homeNoteFile) {
@@ -286,5 +337,13 @@ public class HomeNoteService {
         } catch (Exception e) {
             throw new GeneralException(Code.BAD_REQUEST);
         }
+    }
+
+    private long toMillis(long nanos) {
+        return nanos / 1_000_000;
+    }
+
+    private double nanosToMillis(long nanos) {
+        return nanos / 1_000_000.0;
     }
 }
