@@ -26,6 +26,13 @@
                 <pattern>${LOG_PATTERN}</pattern>
             </encoder>
         </appender>
+
+        <appender name="ASYNC_CONSOLE_PATTERN" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>8192</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <neverBlock>true</neverBlock>
+            <appender-ref ref="CONSOLE_PATTERN"/>
+        </appender>
     </springProfile>
 
     <!-- dev : JSON 형식 -->
@@ -34,6 +41,13 @@
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <customFields>{"app":"dojangkok-backend","env":"${ACTIVE_PROFILE}"}</customFields>
             </encoder>
+        </appender>
+
+        <appender name="ASYNC_CONSOLE_JSON" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>8192</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <neverBlock>true</neverBlock>
+            <appender-ref ref="CONSOLE_JSON"/>
         </appender>
     </springProfile>
 
@@ -61,6 +75,13 @@
                 <pattern>${LOG_PATTERN}</pattern>
             </encoder>
         </appender>
+
+        <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>8192</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <neverBlock>true</neverBlock>
+            <appender-ref ref="FILE"/>
+        </appender>
     </springProfile>
 
     <!-- dev : JSON 형식 -->
@@ -85,6 +106,13 @@
                 <customFields>{"app":"dojangkok-backend","env":"${ACTIVE_PROFILE}"}</customFields>
             </encoder>
         </appender>
+
+        <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+            <queueSize>8192</queueSize>
+            <discardingThreshold>0</discardingThreshold>
+            <neverBlock>true</neverBlock>
+            <appender-ref ref="FILE"/>
+        </appender>
     </springProfile>
 
     <!-- 루트 logger -->
@@ -92,16 +120,16 @@
     <!-- local -->
     <springProfile name="local">
         <root level="${LOG_LEVEL}">
-            <appender-ref ref="CONSOLE_PATTERN"/>
-            <appender-ref ref="FILE"/>
+            <appender-ref ref="ASYNC_CONSOLE_PATTERN"/>
+            <appender-ref ref="ASYNC_FILE"/>
         </root>
     </springProfile>
 
     <!-- dev -->
     <springProfile name="dev">
         <root level="${LOG_LEVEL}">
-            <appender-ref ref="CONSOLE_JSON"/>
-            <appender-ref ref="FILE"/>
+            <appender-ref ref="ASYNC_CONSOLE_JSON"/>
+            <appender-ref ref="ASYNC_FILE"/>
         </root>
     </springProfile>
 
