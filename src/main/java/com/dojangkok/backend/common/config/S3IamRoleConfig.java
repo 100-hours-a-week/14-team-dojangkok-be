@@ -8,9 +8,6 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
-
-import java.time.Duration;
 
 @Configuration
 @Profile("dev")
@@ -24,10 +21,6 @@ public class S3IamRoleConfig {
         return S3Client.builder()
                 .region(Region.of(region))
                 .credentialsProvider(DefaultCredentialsProvider.create())
-                // 가상 스레드 환경을 위한 S3 커넥션 풀 & 타임아웃 튜닝
-                .httpClientBuilder(UrlConnectionHttpClient.builder()
-                        .connectionTimeout(Duration.ofSeconds(3))
-                        .socketTimeout(Duration.ofSeconds(5)))
                 .build();
     }
 
@@ -39,3 +32,4 @@ public class S3IamRoleConfig {
                 .build();
     }
 }
+
