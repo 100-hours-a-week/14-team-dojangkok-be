@@ -6,6 +6,8 @@ services:
       - '8080:8080'
     volumes:
       - ./application.yaml:/app/config/application.yaml
+    environment:
+      JAVA_TOOL_OPTIONS: "-Djdk.tracePinnedThreads=full"
     restart: always
     logging:
       driver: 'json-file'
