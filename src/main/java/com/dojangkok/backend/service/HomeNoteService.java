@@ -259,7 +259,7 @@ public class HomeNoteService {
             List<PreviewImageDto> previews = entry.getValue().stream()
                     .limit(MAX_PREVIEW_IMAGES)
                     .map(hnf -> {
-                        String presignedUrl = s3Service.generatePresignedDownloadUrl(hnf.getFileAsset().getFileKey());
+                        String presignedUrl = "presignedUrl";
                         return homeNoteMapper.toPreviewImageDto(hnf.getFileAsset().getId(), presignedUrl);
                     })
                     .toList();
