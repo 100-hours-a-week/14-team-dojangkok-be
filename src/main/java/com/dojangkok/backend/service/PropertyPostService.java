@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -57,10 +58,11 @@ public class PropertyPostService {
                 : null;
 
         Set<Long> bookmarkedPostIds = getBookmarkedPostIds(memberId, posts);
+        Map<Long, PropertyPostThumbnailDto> thumbnailMap = getThumbnailMap(posts);
 
         List<PropertyPostListItemDto> items = posts.stream()
                 .map(post -> {
-                    PropertyPostThumbnailDto thumbnail = getThumbnail(post.getId());
+                    PropertyPostThumbnailDto thumbnail = thumbnailMap.get(post.getId());
                     return propertyPostMapper.toPropertyPostListItemDto(post, thumbnail, bookmarkedPostIds.contains(post.getId()));
                 })
                 .toList();
@@ -471,17 +473,35 @@ public class PropertyPostService {
                 .toList();
     }
 
-    private PropertyPostThumbnailDto getThumbnail(Long propertyPostId) {
-        List<PropertyPostFile> files = propertyPostFileRepository.findAllByPropertyPostIdWithFileAsset(propertyPostId);
-        return files.stream()
-                .filter(PropertyPostFile::isPrimary)
-                .findFirst()
-                .or(() -> files.stream().findFirst())
-                .map(ppf -> PropertyPostThumbnailDto.builder()
-                        .fileAssetId(ppf.getFileAsset().getId())
-                        .presignedUrl(s3Service.generatePresignedDownloadUrl(ppf.getFileAsset().getFileKey()))
-                        .build())
-                .orElse(null);
+    private Map<Long, PropertyPostThumbnailDto> getThumbnailMap(List<PropertyPost> posts) {
+        if (posts.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> postIds = posts.stream()
+                .map(PropertyPost::getId).toList();
+
+        List<PropertyPostFile> allFiles = propertyPostFileRepository
+                .findAllByPropertyPostIdsWithFileAsset(postIds);
+
+        Map<Long, List<PropertyPostFile>> filesByPostId = allFiles.stream()
+                .collect(Collectors.groupingBy(ppf -> ppf.getPropertyPost().getId()));
+
+        Map<Long, PropertyPostThumbnailDto> result = new HashMap<>();
+        filesByPostId.forEach((postId, files) -> {
+            PropertyPostFile selected = files.stream()
+                    .filter(PropertyPostFile::isPrimary)
+                    .findFirst()
+                    .orElseGet(() -> files.get(0));
+
+            result.put(postId, PropertyPostThumbnailDto.builder()
+                    .fileAssetId(selected.getFileAsset().getId())
+                    .presignedUrl(s3Service.generatePresignedDownloadUrl(
+                            selected.getFileAsset().getFileKey()))
+                    .build());
+        });
+
+        return result;
     }
 
     private PropertyPostListResponseDto buildListResponse(Long memberId, List<PropertyPost> posts, long totalCount) {
@@ -495,10 +515,11 @@ public class PropertyPostService {
                 : null;
 
         Set<Long> bookmarkedPostIds = getBookmarkedPostIds(memberId, posts);
+        Map<Long, PropertyPostThumbnailDto> thumbnailMap = getThumbnailMap(posts);
 
         List<PropertyPostListItemDto> items = posts.stream()
                 .map(post -> {
-                    PropertyPostThumbnailDto thumbnail = getThumbnail(post.getId());
+                    PropertyPostThumbnailDto thumbnail = thumbnailMap.get(post.getId());
                     return propertyPostMapper.toPropertyPostListItemDto(post, thumbnail, bookmarkedPostIds.contains(post.getId()));
                 })
                 .toList();
@@ -522,9 +543,11 @@ public class PropertyPostService {
                 ? CursorPaginationUtil.encodeCursor(posts.getLast().getId())
                 : null;
 
+        Map<Long, PropertyPostThumbnailDto> thumbnailMap = getThumbnailMap(posts);
+
         List<PropertyPostListItemDto> items = posts.stream()
                 .map(post -> {
-                    PropertyPostThumbnailDto thumbnail = getThumbnail(post.getId());
+                    PropertyPostThumbnailDto thumbnail = thumbnailMap.get(post.getId());
                     return propertyPostMapper.toPropertyPostListItemDto(post, thumbnail, true);
                 })
                 .toList();
