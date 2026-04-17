@@ -45,4 +45,10 @@ public interface PropertyPostFileRepository extends JpaRepository<PropertyPostFi
             "JOIN FETCH p.member " +
             "WHERE ppf.fileAsset.id = :fileAssetId")
     Optional<PropertyPostFile> findByFileAssetId(@Param("fileAssetId") Long fileAssetId);
+
+    @Query("SELECT ppf FROM PropertyPostFile ppf " +
+            "JOIN FETCH ppf.fileAsset " +
+            "WHERE ppf.propertyPost.id IN :postIds " +
+            "ORDER BY ppf.propertyPost.id, ppf.sortOrder ASC")
+    List<PropertyPostFile> findAllByPropertyPostIdsWithFileAsset(@Param("postIds") List<Long> postIds);
 }
