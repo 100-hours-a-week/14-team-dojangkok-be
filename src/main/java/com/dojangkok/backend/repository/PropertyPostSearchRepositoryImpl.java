@@ -10,6 +10,7 @@ import com.dojangkok.backend.domain.enums.PropertyPostSort;
 import com.dojangkok.backend.dto.propertypost.PropertyPostSearchRequestDto;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -69,9 +70,14 @@ public class PropertyPostSearchRepositoryImpl implements PropertyPostSearchRepos
         builder.and(pp.postStatus.eq(PostStatus.ACTIVE));
         builder.and(pp.dealStatus.eq(DealStatus.TRADING));
 
-        // 키워드 검색 (searchText = title + addressMain)
+        // 키워드 검색 — Full-Text Index (MATCH ... AGAINST)
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            builder.and(pp.searchText.containsIgnoreCase(request.getKeyword()));
+            builder.and(Expressions.numberTemplate(
+                    Double.class,
+                    "function('match_against', {0}, {1})",
+                    pp.searchText,
+                    request.getKeyword()
+            ).gt(0));
         }
 
         // 매물 유형 (다중 선택)
